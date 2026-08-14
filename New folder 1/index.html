@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TRACker — AI Food Scanner & Glycemic Nutrition Planner</title>
+    <meta name="description" content="TRACker — Production-grade AI food scanner, glycemic index sugar spike engine, budget Indian meal planner, Supabase database, and zero-overrun budget platform." />
+    <meta name="keywords" content="TRACker, fitness, nutrition, AI food scanner, meal planner, Indian food calories, glycemic index, sugar spike, budget nutrition" />
+    <meta name="author" content="TRACker AI Engine" />
+    <link rel="canonical" href="https://tracker-app-ai.vercel.app/" />
+
+    <!-- Google Search Console Verification Meta Tag -->
+    <meta name="google-site-verification" content="google-site-verification-tracker-app-ai" />
+
+    <!-- OpenGraph Social Meta Tags -->
+    <meta property="og:title" content="TRACker — AI Food Scanner & Glycemic Nutrition Planner" />
+    <meta property="og:description" content="Scan meals, track glycemic sugar spike risk, and get personalized budget nutrition advice with zero budget overrun." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tracker-app-ai.vercel.app/" />
+
+    <!-- PWA & Mobile Native Meta Tags -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#4CAF50" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TRACker" />
+
+    <!-- Fonts: NutriScan Design System (Montserrat for Headings, Open Sans for Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "TRACker",
+      "url": "https://tracker-app-ai.vercel.app/",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "INR"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-gray-50 dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 font-body antialiased min-h-screen selection:bg-emerald-600 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Register PWA Service Worker for Cross-Platform App Support -->
+    <script>
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration error:', err));
+        });
+      }
+    </script>
+  </body>
+</html>

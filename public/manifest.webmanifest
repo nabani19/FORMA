@@ -1,0 +1,45 @@
+{
+  "name": "Forma AI Health & Nutrition Suite",
+  "short_name": "Forma AI",
+  "description": "AI food scanner, clinical nutrition engine, Indian meal logging, 1000+ workout planner, and biomarker analyzer.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B0F1A",
+  "theme_color": "#0B0F1A",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["health", "fitness", "lifestyle", "medical"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥑</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "AI Food Scanner",
+      "short_name": "Scan Food",
+      "description": "Instant food vision nutrition analysis",
+      "url": "/#scanner",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Meal Logs",
+      "short_name": "Meals",
+      "description": "View 7-day meal schedule & track eaten meals",
+      "url": "/#logs",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥗</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "AI Coach",
+      "short_name": "Coach",
+      "description": "Chat with clinical nutrition coach",
+      "url": "/#coach",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>", "sizes": "96x96" }]
+    }
+  ]
+}

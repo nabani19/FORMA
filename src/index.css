@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════
+   FORMA AI — Design System CSS
+   Dark mode: .dark class on <html>
+   Light mode: default (no class)
+   ═══════════════════════════════════════════════════════════════ */
+
+@layer base {
+  /* ── LIGHT MODE (default) ─────────────────────────────────── */
+  :root {
+    --bg-base:       #F0F4FF;
+    --bg-card:       #FFFFFF;
+    --bg-card-2:     #EEF2FF;
+    --bg-nav:        rgba(255,255,255,0.92);
+    --bg-input:      #F8FAFF;
+    --border:        #C7D2FE;
+    --border-hover:  #818CF8;
+    --text-primary:  #1E1B4B;
+    --text-secondary:#4338CA;
+    --text-muted:    #6B7280;
+    --accent-1:      #6366F1;   /* indigo */
+    --accent-2:      #10B981;   /* emerald */
+    --accent-3:      #8B5CF6;   /* violet */
+    --accent-4:      #F59E0B;   /* amber */
+    --accent-5:      #EC4899;   /* pink */
+    --shadow:        rgba(99,102,241,0.12);
+  }
+
+  /* ── DARK MODE (.dark on <html>) ─────────────────────────── */
+  html.dark {
+    --bg-base:       #0B0F1A;
+    --bg-card:       #111827;
+    --bg-card-2:     #0D1117;
+    --bg-nav:        rgba(11,15,26,0.95);
+    --bg-input:      #0D1117;
+    --border:        #1F2937;
+    --border-hover:  #4ADE80;
+    --text-primary:  #F0F9FF;
+    --text-secondary:#A5B4FC;
+    --text-muted:    #94A3B8;
+    --accent-1:      #818CF8;
+    --accent-2:      #34D399;
+    --accent-3:      #C084FC;
+    --accent-4:      #FBBF24;
+    --accent-5:      #F472B6;
+    --shadow:        rgba(129,140,248,0.12);
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    @apply font-body min-h-screen overflow-x-hidden transition-colors duration-300;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Safe area utility classes for Android gesture navigation */
+  .safe-area-bottom {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Minimum touch target utility for mobile (44px/48px standard) */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+
+  /* Remove number input spinners */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    margin: 0 !important;
+  }
+  input[type=number] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+  }
+}
+
+/* ══ LIGHT MODE TAILWIND OVERRIDES ═══════════════════════════ */
+/* When NOT dark, force slate-based Tailwind classes to use light theme */
+:not(.dark) .bg-slate-950 { background-color: #F0F4FF !important; }
+:not(.dark) .bg-slate-900 { background-color: #FFFFFF !important; }
+:not(.dark) .bg-slate-800 { background-color: #EEF2FF !important; }
+:not(.dark) .bg-slate-800\/60 { background-color: rgba(238,242,255,0.8) !important; }
+:not(.dark) .bg-slate-900\/80 { background-color: rgba(255,255,255,0.95) !important; }
+:not(.dark) .bg-slate-900\/60 { background-color: rgba(255,255,255,0.85) !important; }
+:not(.dark) .bg-slate-950\/80 { background-color: rgba(240,244,255,0.9) !important; }
+:not(.dark) .bg-slate-950\/90 { background-color: rgba(238,242,255,0.95) !important; }
+:not(.dark) .bg-slate-950\/60 { background-color: rgba(240,244,255,0.75) !important; }
+:not(.dark) .bg-slate-950\/40 { background-color: rgba(240,244,255,0.6) !important; }
+:not(.dark) .border-slate-800 { border-color: #C7D2FE !important; }
+:not(.dark) .border-slate-700 { border-color: #A5B4FC !important; }
+:not(.dark) .border-slate-800\/80 { border-color: rgba(199,210,254,0.8) !important; }
+:not(.dark) .text-slate-100 { color: #1E1B4B !important; }
+:not(.dark) .text-slate-200 { color: #312E81 !important; }
+:not(.dark) .text-slate-300 { color: #3730A3 !important; }
+:not(.dark) .text-slate-400 { color: #6B7280 !important; }
+:not(.dark) .text-slate-500 { color: #9CA3AF !important; }
+:not(.dark) .text-slate-600 { color: #D1D5DB !important; }
+
+/* Bottom nav & Navbar in light mode */
+:not(.dark) nav.sticky-nav,
+:not(.dark) header.sticky { background: rgba(255,255,255,0.96) !important; }
+
+/* ══ Scrollbar ═══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.6); }
+
+/* ══ Glassmorphism ═══════════════════════════════════════════ */
+.glass-panel {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+:not(.dark) .glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(99, 102, 241, 0.18);
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(99, 102, 241, 0.15);
+}
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.18);
+}
+
+/* ══ Eaten Meal Row ══════════════════════════════════════════ */
+.meal-eaten {
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-color: #34D399;
+}
+.meal-eaten-check {
+  box-shadow: 0 0 0 3px rgba(52,211,153,0.25);
+}
+
+/* ══ Scanner Laser ═══════════════════════════════════════════ */
+@keyframes laserSweep {
+  0%   { top: 0%;  opacity: 0.8; }
+  50%  { top: 92%; opacity: 1; }
+  100% { top: 0%;  opacity: 0.8; }
+}
+.animate-laser { animation: laserSweep 2.2s ease-in-out infinite; }
+
+/* ══ Fade-in animation ════════════════════════════════════════ */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.25s ease-out both; }
+
+/* ══ Gradient text utility ═══════════════════════════════════ */
+.text-gradient-indigo {
+  background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #F472B6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 60%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ══ No-scrollbar utility ════════════════════════════════════ */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ══ Accessibility ════════════════════════════════════════════ */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0;
+  margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border-width: 0;
+}
+:focus-visible { outline: 2px solid #6366F1 !important; outline-offset: 2px !important; }

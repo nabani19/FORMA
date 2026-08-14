@@ -1,0 +1,6 @@
+# Robots.txt for Forma AI Health & Performance Suite
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://forma-ai.io/sitemap.xml

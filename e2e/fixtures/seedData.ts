@@ -1,0 +1,77 @@
+import { User, DietaryPreference, MealLog } from '../../src/types';
+
+export const MOCK_TEST_USER: User = {
+  userId: 'test-user-e2e',
+  email: 'e2e-tester@forma-ai.io',
+  firstName: 'Priya',
+  lastName: 'Sharma',
+  gender: 'female',
+  heightCm: 165,
+  weightKg: 60,
+  activityLevel: 'moderately_active',
+  healthGoal: 'muscle_gain',
+  calculationFormula: 'who_fao',
+  dailyCalorieTarget: 2150,
+  dailyProteinTargetG: 135,
+  dailyCarbsTargetG: 240,
+  dailyFatTargetG: 55,
+  dailyFiberTargetG: 30,
+  dailyBudgetInr: 200,
+  monthlyBudgetInr: 6000,
+  supplementBudgetInr: 3500,
+  currency: 'INR',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+export const MOCK_TEST_PREFERENCES: DietaryPreference[] = [
+  { preferenceId: 'pref-1', userId: 'test-user-e2e', type: 'preference', value: 'Vegetarian' },
+  { preferenceId: 'pref-2', userId: 'test-user-e2e', type: 'allergy', value: 'Peanuts' },
+];
+
+export const MOCK_TEST_MEAL_LOGS: MealLog[] = [
+  {
+    logId: 'meal-log-1',
+    userId: 'test-user-e2e',
+    foodItemId: 'food_1',
+    foodName: 'Paneer Bhurji & Multigrain Roti',
+    imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&q=80&w=400',
+    mealType: 'breakfast',
+    portionSizeGrams: 200,
+    costInr: 65,
+    dayOfWeek: 'friday',
+    calculatedNutrients: {
+      calories: 380,
+      protein_g: 24,
+      carbs_g: 28,
+      fat_g: 14,
+      fiber_g: 6,
+      sugar_g: 2,
+      vitamins: {},
+      minerals: {},
+    },
+    loggedAt: new Date().toISOString(),
+  },
+  {
+    logId: 'meal-log-2',
+    userId: 'test-user-e2e',
+    foodItemId: 'food_2',
+    foodName: 'Sprouted Moong Salad with Lemon',
+    imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=400',
+    mealType: 'lunch',
+    portionSizeGrams: 180,
+    costInr: 45,
+    dayOfWeek: 'friday',
+    calculatedNutrients: {
+      calories: 220,
+      protein_g: 16,
+      carbs_g: 32,
+      fat_g: 3,
+      fiber_g: 8,
+      sugar_g: 3,
+      vitamins: {},
+      minerals: {},
+    },
+    loggedAt: new Date().toISOString(),
+  },
+];

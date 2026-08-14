@@ -1,0 +1,12 @@
+{
+  "appId": "com.tracker.ai",
+  "appName": "TRACker AI",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#09090b"
+    }
+  }
+}

@@ -1,6 +1,20 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Scan, Flame, Plus, ArrowRight, Bot, Dumbbell, Utensils, TrendingUp } from 'lucide-react';
+import { 
+  Scan, 
+  Flame, 
+  Plus, 
+  ArrowRight, 
+  Bot, 
+  Dumbbell, 
+  Utensils, 
+  TrendingUp, 
+  ShieldCheck, 
+  Sparkles,
+  Wallet,
+  Activity,
+  CheckCircle2
+} from 'lucide-react';
 import { BudgetSettingsPanel } from './BudgetSettingsPanel';
 import { getStartOfToday, deriveDailyBudget, formatINR } from '../utils/nutritionUtils';
 
@@ -12,15 +26,15 @@ export const Dashboard: React.FC = () => {
   const todayLogs = mealLogs.filter((log) => new Date(log.loggedAt) >= todayStart);
 
   // Totals from actual user logs
-  const totalCalories = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients.calories || 0), 0));
-  const totalProtein  = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients.protein_g || 0), 0));
-  const totalCarbs    = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients.carbs_g || 0), 0));
-  const totalFat      = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients.fat_g || 0), 0));
+  const totalCalories = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients?.calories || 0), 0));
+  const totalProtein  = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients?.protein_g || 0), 0));
+  const totalCarbs    = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients?.carbs_g || 0), 0));
+  const totalFat      = Math.round(todayLogs.reduce((acc, log) => acc + (log.calculatedNutrients?.fat_g || 0), 0));
 
-  const calTarget     = Math.round(user.dailyCalorieTarget);
-  const proteinTarget = Math.round(user.dailyProteinTargetG);
-  const carbsTarget   = Math.round(user.dailyCarbsTargetG);
-  const fatTarget     = Math.round(user.dailyFatTargetG);
+  const calTarget     = Math.round(user.dailyCalorieTarget || 2150);
+  const proteinTarget = Math.round(user.dailyProteinTargetG || 140);
+  const carbsTarget   = Math.round(user.dailyCarbsTargetG || 240);
+  const fatTarget     = Math.round(user.dailyFatTargetG || 65);
 
   const calRemaining  = Math.max(0, calTarget - totalCalories);
   const calPercent    = Math.min(100, Math.round((totalCalories / calTarget) * 100));
@@ -29,99 +43,142 @@ export const Dashboard: React.FC = () => {
   const fatPct        = Math.min(100, Math.round((totalFat / fatTarget) * 100));
 
   const dailyBudget   = user?.dailyBudgetInr || deriveDailyBudget(user.monthlyBudgetInr);
+  const monthlyBudget = user?.monthlyBudgetInr || (dailyBudget * 30);
 
   return (
-    <div className="space-y-5 pb-24 max-w-5xl mx-auto px-4 pt-4">
+    <div className="space-y-6 pb-24 max-w-5xl mx-auto px-4 pt-4 animate-fade-in" data-testid="dashboard-view">
 
-      {/* ── Greeting Banner ─────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-5 relative overflow-hidden shadow-xl">
-        <div className="absolute top-0 right-0 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ── 1. FRESH HERO GREETING CARD ───────────────────────────── */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800/80 rounded-3xl p-6 relative overflow-hidden shadow-2xl backdrop-blur-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <span className="text-[11px] font-extrabold text-emerald-400 uppercase tracking-wide bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-              {user.healthGoal?.replace(/_/g, ' ').toUpperCase() || 'HEALTH GOAL'}
-            </span>
-            <h2 className="text-2xl font-extrabold font-heading text-slate-100 mt-1">
-              Hello, {user.firstName || 'User'}! 👋
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-extrabold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 font-mono">
+                {user.healthGoal?.replace(/_/g, ' ').toUpperCase() || 'PERFORMANCE GOAL'}
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Formula: {user.calculationFormula?.toUpperCase() || 'WHO/FAO 2004'}
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-100 tracking-tight">
+              Welcome back, {user.firstName || 'Athlete'}! ✨
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
               {todayLogs.length === 0
-                ? 'No meals logged yet today. Start by scanning your first meal.'
-                : `${todayLogs.length} meal${todayLogs.length > 1 ? 's' : ''} logged today · ${calRemaining} kcal remaining`}
+                ? 'Your daily nutrition & fitness cockpit is ready. Scan a food item or log your first meal to start tracking.'
+                : `You have logged ${todayLogs.length} meal${todayLogs.length > 1 ? 's' : ''} today with ${calRemaining} kcal remaining in your target.`}
             </p>
           </div>
 
-          <button
-            onClick={() => setIsScannerOpen(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold px-5 py-3 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 shrink-0"
-          >
-            <Scan className="w-5 h-5" />
-            <span>Scan Food</span>
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+              data-testid="dashboard-scan-btn"
+            >
+              <Scan className="w-4 h-4" />
+              <span>Scan Food</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('logs')}
+              className="flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl transition-all"
+            >
+              <Utensils className="w-4 h-4 text-emerald-400" />
+              <span>Log Meal</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ── Core Macro Stats Row ─────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* ── 2. NEAT & CLEAN MACRO METRIC CARDS ────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
-          { label: 'Calories', val: totalCalories, target: calTarget, unit: 'kcal', pct: calPercent, color: 'text-amber-400', bar: 'bg-amber-400' },
-          { label: 'Protein',  val: totalProtein,  target: proteinTarget, unit: 'g', pct: proteinPct, color: 'text-sky-400',  bar: 'bg-sky-400' },
-          { label: 'Carbs',    val: totalCarbs,    target: carbsTarget,   unit: 'g', pct: carbsPct,   color: 'text-amber-300', bar: 'bg-amber-300' },
-          { label: 'Fats',     val: totalFat,      target: fatTarget,     unit: 'g', pct: fatPct,     color: 'text-rose-400',  bar: 'bg-rose-400' },
+          { label: 'Calories', val: totalCalories, target: calTarget, unit: 'kcal', pct: calPercent, color: 'text-amber-400', barGradient: 'from-amber-500 to-orange-400', remaining: `${calRemaining} left` },
+          { label: 'Protein',  val: totalProtein,  target: proteinTarget, unit: 'g', pct: proteinPct, color: 'text-sky-400',  barGradient: 'from-sky-500 to-indigo-400', remaining: `${Math.max(0, proteinTarget - totalProtein)}g left` },
+          { label: 'Carbs',    val: totalCarbs,    target: carbsTarget,   unit: 'g', pct: carbsPct,   color: 'text-emerald-400', barGradient: 'from-emerald-500 to-teal-400', remaining: `${Math.max(0, carbsTarget - totalCarbs)}g left` },
+          { label: 'Fats',     val: totalFat,      target: fatTarget,     unit: 'g', pct: fatPct,     color: 'text-rose-400',  barGradient: 'from-rose-500 to-pink-400', remaining: `${Math.max(0, fatTarget - totalFat)}g left` },
         ].map((m) => (
-          <div key={m.label} className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <div className="flex justify-between text-xs font-semibold">
-              <span className="text-slate-400">{m.label}</span>
-              <span className={m.color}>{m.pct}%</span>
+          <div key={m.label} className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4.5 space-y-3 transition-all shadow-md backdrop-blur-xl">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-400 font-semibold">{m.label}</span>
+              <span className={`font-mono font-bold ${m.color}`}>{m.pct}%</span>
             </div>
-            <div className={`text-xl font-extrabold font-mono ${m.color}`}>
-              {m.val}<span className="text-xs font-normal text-slate-500 ml-1">{m.unit}</span>
+
+            <div>
+              <div className={`text-2xl font-extrabold font-mono tracking-tight ${m.color}`}>
+                {m.val}
+                <span className="text-xs font-normal text-slate-500 ml-1">{m.unit}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono mt-0.5">
+                <span>Target: {m.target}{m.unit}</span>
+                <span className="text-slate-500 text-[10px]">{m.remaining}</span>
+              </div>
             </div>
-            <div className="text-[10px] text-slate-500">of {m.target}{m.unit}</div>
-            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <div className={`${m.bar} h-full rounded-full transition-all duration-700`} style={{ width: `${m.pct}%` }} />
+
+            <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden p-0.5 border border-slate-800/80">
+              <div
+                className={`bg-gradient-to-r ${m.barGradient} h-full rounded-full transition-all duration-700`}
+                style={{ width: `${m.pct}%` }}
+              />
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── Daily Budget & Active Preferences ────────────────── */}
+      {/* ── 3. FOOD BUDGET & HEALTH SNAPSHOT ──────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* Budget Card */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-1">Daily Food Budget</div>
-            <div className="text-2xl font-extrabold font-mono text-emerald-400">
-              ₹{dailyBudget}
+        {/* Daily Food Budget Card */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex items-center justify-between gap-4 backdrop-blur-xl">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
+              <Wallet className="w-4 h-4 text-emerald-400" />
+              <span>Daily Nutrition Budget</span>
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              ₹{dailyBudget} × 30 days = <span className="text-emerald-300 font-bold">₹{formatINR(dailyBudget * 30)} / month</span>
+            <div className="text-2xl font-extrabold font-mono text-emerald-400">
+              ₹{dailyBudget} <span className="text-xs font-normal text-slate-400">/ day</span>
+            </div>
+            <div className="text-xs text-slate-400 font-mono">
+              ₹{dailyBudget}/day × 30 = <strong className="text-slate-200">₹{formatINR(monthlyBudget)} / month</strong>
             </div>
           </div>
+
           <button
-            onClick={() => setActiveTab('logs')}
-            className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+            onClick={() => setActiveTab('grocery')}
+            className="text-xs font-bold text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 px-3.5 py-2.5 rounded-2xl border border-teal-500/30 transition-all shrink-0"
           >
-            View Meal Log →
+            Grocery List →
           </button>
         </div>
 
-        {/* Active Preferences/Allergens */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-          <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide mb-2">Your Active Dietary Filters</div>
+        {/* Active Dietary Regimes & Filters */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg space-y-2 backdrop-blur-xl">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-indigo-400" />
+            <span>Active Dietary Regimes & Safeguards</span>
+          </div>
+
           {preferences.length === 0 ? (
-            <p className="text-xs text-slate-500">No dietary preferences set. Update in your Profile.</p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-xs text-slate-400">All standard foods allowed. No allergen restrictions active.</p>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className="text-xs text-indigo-400 hover:underline font-semibold"
+              >
+                Customize →
+              </button>
+            </div>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {preferences.map((p) => (
                 <span
                   key={p.preferenceId}
-                  className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border ${
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-xl border ${
                     p.type === 'allergy'
                       ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                      : 'bg-slate-800 border-slate-700 text-slate-300'
+                      : 'bg-slate-950 border-slate-700 text-slate-200'
                   }`}
                 >
                   {p.type === 'allergy' ? `⚠️ ${p.value}` : p.value}
@@ -130,43 +187,44 @@ export const Dashboard: React.FC = () => {
             </div>
           )}
         </div>
+
       </div>
 
-      {/* ── Quick Action Grid ─────────────────────────────────── */}
+      {/* ── 4. QUICK TOOLS SHORTCUTS ──────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Meal Log', sub: `${todayLogs.length} meals today`, tab: 'logs' as const, icon: Utensils, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-          { label: 'AI Coach', sub: 'Ask anything', tab: 'coach' as const, icon: Bot, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
-          { label: 'Workout', sub: '1,000+ exercises', tab: 'workout' as const, icon: Dumbbell, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' },
-          { label: 'Analytics', sub: 'Intake trends', tab: 'analytics' as const, icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+          { label: '5-Meal Planner', sub: 'Daily logs & macros', tab: 'logs' as const, icon: Utensils, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'AI Nutritionist', sub: 'Clinical advice chat', tab: 'coach' as const, icon: Bot, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+          { label: 'Supplements', sub: 'AI budget stack', tab: 'supplements' as const, icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+          { label: 'Workout AI', sub: '1,000+ exercises', tab: 'workout' as const, icon: Dumbbell, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
         ].map((q) => {
           const Icon = q.icon;
           return (
             <button
               key={q.tab}
               onClick={() => setActiveTab(q.tab)}
-              className={`bg-slate-900/80 border ${q.bg} rounded-2xl p-4 text-left hover:scale-[1.02] transition-all space-y-2`}
+              className={`bg-slate-900/90 border ${q.bg} rounded-2xl p-4 text-left hover:scale-[1.02] active:scale-98 transition-all space-y-1.5 shadow-md`}
             >
               <Icon className={`w-5 h-5 ${q.color}`} />
-              <div className="text-sm font-bold text-slate-100">{q.label}</div>
-              <div className="text-[10px] text-slate-400">{q.sub}</div>
+              <div className="text-xs sm:text-sm font-bold text-slate-100 font-heading">{q.label}</div>
+              <div className="text-[10px] text-slate-400 font-mono">{q.sub}</div>
             </button>
           );
         })}
       </div>
 
-      {/* ── Budget Settings (user-adjustable inline) ──────────────── */}
-      <BudgetSettingsPanel />
-
-      {/* ── Today's Logged Meals ──────────────────────────────── */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+      {/* ── 5. TODAY'S LOGGED MEALS ───────────────────────────────── */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4 backdrop-blur-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Today's Logged Meals ({todayLogs.length})
-          </h3>
+          <div className="flex items-center gap-2">
+            <Utensils className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+              Today's Logged Meals ({todayLogs.length})
+            </h3>
+          </div>
           <button
             onClick={() => setActiveTab('logs')}
-            className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1 font-mono"
           >
             <span>Full History</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -174,12 +232,12 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {todayLogs.length === 0 ? (
-          <div className="text-center py-8 bg-slate-950/40 rounded-2xl border border-slate-800/80">
-            <Utensils className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+          <div className="text-center py-8 bg-slate-950/50 rounded-2xl border border-slate-800/80 space-y-2">
+            <Utensils className="w-8 h-8 text-slate-600 mx-auto" />
             <p className="text-xs font-semibold text-slate-400">No meals logged yet today.</p>
             <button
               onClick={() => setIsScannerOpen(true)}
-              className="mt-2 text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1"
+              className="mt-1 text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1 font-mono"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Log Your First Meal</span>
@@ -190,24 +248,24 @@ export const Dashboard: React.FC = () => {
             {todayLogs.map((log) => (
               <div
                 key={log.logId}
-                className="bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-3 flex items-center justify-between gap-3 transition-all"
+                className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 flex items-center justify-between gap-3 transition-all"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={log.imageUrl}
                     alt={log.foodName}
-                    className="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-700/60"
+                    className="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-800"
                   />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-200 truncate font-heading">{log.foodName}</div>
-                    <div className="text-[11px] text-slate-400 font-medium mt-0.5">
-                      {Math.round(log.portionSizeGrams)}g · {Math.round(log.calculatedNutrients.calories)} kcal
+                    <div className="text-[11px] text-slate-400 font-medium mt-0.5 font-mono">
+                      {Math.round(log.portionSizeGrams)}g · {Math.round(log.calculatedNutrients?.calories || 0)} kcal
                     </div>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="text-[11px] font-bold text-sky-400">P: {Math.round(log.calculatedNutrients.protein_g)}g</div>
-                  <div className="text-[10px] text-amber-400">C: {Math.round(log.calculatedNutrients.carbs_g)}g</div>
+                <div className="text-right shrink-0 font-mono">
+                  <div className="text-[11px] font-bold text-sky-400">P: {Math.round(log.calculatedNutrients?.protein_g || 0)}g</div>
+                  <div className="text-[10px] text-amber-400">C: {Math.round(log.calculatedNutrients?.carbs_g || 0)}g</div>
                 </div>
               </div>
             ))}

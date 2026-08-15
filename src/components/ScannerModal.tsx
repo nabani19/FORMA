@@ -39,6 +39,11 @@ export const ScannerModal: React.FC = () => {
 
   const startWebcam = async () => {
     try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        console.warn('Webcam API not supported in this browser environment or insecure HTTP context.');
+        setIsWebcamActive(false);
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;

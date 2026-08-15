@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { User, ActivityLevel, HealthGoal, Gender } from '../types';
-import { User as UserIcon, Settings, ShieldAlert, Save, Plus, Trash2, ShieldCheck, Server, Activity, Target, Cpu, Globe, RefreshCw } from 'lucide-react';
+import { User as UserIcon, Settings, ShieldAlert, Save, Plus, Trash2, ShieldCheck, Server, Activity, Target, Cpu, Globe, RefreshCw, Sun, Moon } from 'lucide-react';
 import { runOwaspSecurityAudit, getSecurityHeaders } from '../utils/securityEngine';
 import { getProductionClusterTelemetry } from '../utils/k8sHealth';
 
 export const ProfileView: React.FC = () => {
-  const { user, updateUser, preferences, addPreference, removePreference, resetAllData } = useApp();
+  const { user, updateUser, preferences, addPreference, removePreference, resetAllData, isDarkMode, toggleDarkMode } = useApp();
 
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
@@ -228,6 +228,52 @@ export const ProfileView: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* App Appearance & Theme Selection */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4" data-testid="profile-theme-card">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-100 font-heading flex items-center gap-2">
+              {isDarkMode ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              App Appearance & Theme Mode
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">Toggle between High-Contrast Dark Mode and Crisp Light Mode</p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            {isDarkMode ? 'Dark Active' : 'Light Active'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => { if (!isDarkMode) toggleDarkMode(); }}
+            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl border text-xs font-bold transition-all ${
+              isDarkMode
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400'
+                : 'bg-slate-950/60 hover:bg-slate-800/80 text-slate-300 border-slate-800'
+            }`}
+            data-testid="btn-select-dark-theme"
+          >
+            <Moon className="w-4 h-4 text-indigo-300" />
+            <span>Dark Theme (Default)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { if (isDarkMode) toggleDarkMode(); }}
+            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl border text-xs font-bold transition-all ${
+              !isDarkMode
+                ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/30 ring-2 ring-amber-400'
+                : 'bg-slate-950/60 hover:bg-slate-800/80 text-slate-300 border-slate-800'
+            }`}
+            data-testid="btn-select-light-theme"
+          >
+            <Sun className="w-4 h-4 text-amber-400" />
+            <span>Light Theme</span>
+          </button>
+        </div>
       </div>
 
       {/* Manage Dietary Restrictions & Allergens */}

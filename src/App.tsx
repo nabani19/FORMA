@@ -31,10 +31,14 @@ const MainLayout: React.FC = () => {
 
   if (!isOnboardingCompleted) {
     return (
-      <>
+      <div className={`min-h-screen flex flex-col font-body selection:bg-indigo-500 selection:text-white transition-colors duration-300 ${
+        isDarkMode
+          ? 'bg-slate-950 text-slate-100'
+          : 'bg-indigo-50 text-indigo-950'
+      }`}>
         <OnboardingWizard />
         <SaaSModals />
-      </>
+      </div>
     );
   }
 

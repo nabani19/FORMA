@@ -236,7 +236,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('ai_nutrition_theme', next ? 'dark' : 'light');
+      } catch (e) {
+        console.error('Failed to save theme to localStorage:', e);
+      }
+      if (next) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      showToast(next ? '🌙 High-Contrast Dark Mode Enabled' : '☀️ Crisp Light Mode Enabled', 'info');
+      return next;
+    });
   };
 
   const updateUser = (updated: Partial<User>) => {

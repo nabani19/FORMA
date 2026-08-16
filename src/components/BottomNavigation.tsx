@@ -45,11 +45,12 @@ export const BottomNavigation: React.FC = () => {
     { id: 'workout', label: 'Workout Generator', icon: Dumbbell, color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
     { id: 'supplements', label: 'Supplement Stack', icon: Pill, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
     { id: 'grocery', label: 'Grocery Planner', icon: ShoppingCart, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-    { id: 'analytics', label: 'Analytics & Macro Trends', icon: BarChart3, color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
+    { id: 'trainer', label: 'Trainer & Coach', icon: UserCircle, color: 'text-indigo-400 bg-indigo-500/15 border-indigo-500/30' },
+    { id: 'analytics', label: 'Analytics & Trends', icon: BarChart3, color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
     { id: 'profile', label: 'Profile & Subscription', icon: UserCircle, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
   ];
 
-  const isMoreTabActive = ['medical', 'workout', 'supplements', 'grocery', 'analytics', 'profile'].includes(activeTab);
+  const isMoreTabActive = ['medical', 'workout', 'supplements', 'grocery', 'analytics', 'profile', 'trainer'].includes(activeTab);
 
   const handleSelectDrawerItem = (tab: ActiveTab) => {
     setActiveTab(tab);

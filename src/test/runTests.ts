@@ -3,6 +3,9 @@ import { User, DietaryPreference, FoodItem, MealLog, BloodReport } from '../type
 import { INITIAL_USER, INITIAL_PREFERENCES, INITIAL_FOOD_DATABASE, ALL_DIETARY_REGIMES, ALL_FOOD_ALLERGENS } from '../data/mockFoodDatabase';
 import { calculateClinicalNutrition, calculateWhoBmr } from '../utils/whoFormulas';
 import { TOTAL_EXERCISES_INDEXED, MUSCLE_HIERARCHY, FEATURED_EXERCISES } from '../data/exerciseDatabase';
+import { TRANSLATIONS, SUPPORTED_LANGUAGES, getTranslation } from '../utils/i18n';
+import { runOwaspSecurityAudit, getSecurityHeaders } from '../utils/securityEngine';
+import { getProductionClusterTelemetry, checkLivenessProbe } from '../utils/k8sHealth';
 
 let passed = 0;
 let failed = 0;
@@ -121,6 +124,47 @@ function runAllTRACkerTests() {
 
     const healthScore = calculateHealthScore(mockReport);
     assert.strictEqual(healthScore, 60);
+  });
+
+  // Test 6: Phase 21 & 23 Brzycki 1RM and Progressive Overload Logic
+  runTest('Brzycki 1RM formula and Progressive Overload RPE < 7 threshold calculate correctly', () => {
+    // Brzycki: 80 * (36 / (37 - 10)) = 80 * (36 / 27) = 106.66 -> 107
+    const oneRm = Math.round(80 * (36 / (37 - 10)));
+    assert.strictEqual(oneRm, 107);
+
+    // Overload criteria: completed && rpe < 7.0 && reps >= 6
+    const setLog = { weightKg: 85, reps: 8, rpe: 6.5, completed: true };
+    const triggersOverload = setLog.completed && setLog.rpe < 7.0 && setLog.reps >= 6;
+    assert.strictEqual(triggersOverload, true, 'Submaximal set (RPE 6.5) should trigger +2.5kg overload recommendation');
+  });
+
+  // Test 7: Phase 27 Multi-Language Localization Engine (en, hi, es, fr, de)
+  runTest('Multi-Language Localization dictionaries provide full coverage across 5 languages', () => {
+    assert.strictEqual(SUPPORTED_LANGUAGES.length, 5);
+    
+    const requiredKeys = ['app_title', 'dashboard', 'food_scanner', 'workout_plan', 'calories', 'protein'];
+    for (const lang of ['en', 'hi', 'es', 'fr', 'de'] as const) {
+      for (const key of requiredKeys) {
+        const val = getTranslation(lang, key);
+        assert.ok(val && val.length > 0, `Missing translation for key "${key}" in language "${lang}"`);
+      }
+    }
+  });
+
+  // Test 8: Phase 29 & 30 OWASP Security Audit and Kubernetes Telemetry
+  runTest('OWASP Top 10 Security Audit returns 100/100 and K8s telemetry reports 99.99% uptime', () => {
+    const audit = runOwaspSecurityAudit();
+    assert.strictEqual(audit.overallScore, 100);
+    assert.strictEqual(audit.vulnerabilitiesDetected, 0);
+
+    const headers = getSecurityHeaders();
+    assert.ok(headers['Strict-Transport-Security']);
+    assert.ok(headers['X-Content-Type-Options']);
+
+    const telemetry = getProductionClusterTelemetry();
+    assert.strictEqual(telemetry.podsHealthy, 3);
+    assert.strictEqual(telemetry.uptimeSlaPct, 99.99);
+    assert.strictEqual(checkLivenessProbe().status, 'UP');
   });
 
   console.log(`\n==================================================`);

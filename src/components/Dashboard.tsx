@@ -12,14 +12,25 @@ import {
   ShieldCheck, 
   Sparkles,
   Wallet,
-  Activity,
-  CheckCircle2
+  FileText,
+  Users,
+  Server
 } from 'lucide-react';
 import { BudgetSettingsPanel } from './BudgetSettingsPanel';
+import { GamificationWidget } from './GamificationWidget';
 import { getStartOfToday, deriveDailyBudget, formatINR } from '../utils/nutritionUtils';
 
 export const Dashboard: React.FC = () => {
-  const { user, preferences, mealLogs, setActiveTab, setIsScannerOpen } = useApp();
+  const { 
+    user, 
+    preferences, 
+    mealLogs, 
+    setActiveTab, 
+    setIsScannerOpen, 
+    setIsPdfExportModalOpen, 
+    setIsHealthModalOpen,
+    t 
+  } = useApp();
 
   // Filter today's meal logs using shared date utility
   const todayStart = getStartOfToday();
@@ -48,7 +59,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6 pb-24 max-w-5xl mx-auto px-4 pt-4 animate-fade-in" data-testid="dashboard-view">
 
-      {/* ── 1. FRESH HERO GREETING CARD ───────────────────────────── */}
+      {/* ── 1. Fresh Hero Greeting Card ───────────────────────────── */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800/80 rounded-3xl p-6 relative overflow-hidden shadow-2xl backdrop-blur-xl">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -72,113 +83,156 @@ export const Dashboard: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               onClick={() => setIsScannerOpen(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
-              data-testid="dashboard-scan-btn"
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95"
+              data-testid="btn-hero-scan"
             >
               <Scan className="w-4 h-4" />
-              <span>Scan Food</span>
+              <span>{t('scan_food')}</span>
             </button>
             <button
               onClick={() => setActiveTab('logs')}
-              className="flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl transition-all"
+              className="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-2xl transition-all"
             >
-              <Utensils className="w-4 h-4 text-emerald-400" />
-              <span>Log Meal</span>
+              <Plus className="w-4 h-4" />
+              <span>{t('log_meal')}</span>
+            </button>
+            <button
+              onClick={() => setIsPdfExportModalOpen(true)}
+              className="flex items-center gap-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-300 font-bold text-xs px-3 py-2.5 rounded-2xl transition-all"
+              title="Export Clinical PDF Reports"
+            >
+              <FileText className="w-4 h-4 text-indigo-400" />
+              <span className="hidden sm:inline">Export PDF</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── 2. NEAT & CLEAN MACRO METRIC CARDS ────────────────────── */}
+      {/* ── 2. Phase 25: Gamification & Streak Badges Hub ─────────── */}
+      <GamificationWidget />
+
+      {/* ── 3. Neat & Clean Macro Metric Cards ────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
-          { label: 'Calories', val: totalCalories, target: calTarget, unit: 'kcal', pct: calPercent, color: 'text-amber-400', barGradient: 'from-amber-500 to-orange-400', remaining: `${calRemaining} left` },
-          { label: 'Protein',  val: totalProtein,  target: proteinTarget, unit: 'g', pct: proteinPct, color: 'text-sky-400',  barGradient: 'from-sky-500 to-indigo-400', remaining: `${Math.max(0, proteinTarget - totalProtein)}g left` },
-          { label: 'Carbs',    val: totalCarbs,    target: carbsTarget,   unit: 'g', pct: carbsPct,   color: 'text-emerald-400', barGradient: 'from-emerald-500 to-teal-400', remaining: `${Math.max(0, carbsTarget - totalCarbs)}g left` },
-          { label: 'Fats',     val: totalFat,      target: fatTarget,     unit: 'g', pct: fatPct,     color: 'text-rose-400',  barGradient: 'from-rose-500 to-pink-400', remaining: `${Math.max(0, fatTarget - totalFat)}g left` },
+          { label: t('calories'), val: totalCalories, target: calTarget, unit: 'kcal', pct: calPercent, color: 'text-amber-400', barGradient: 'from-amber-500 to-orange-400', remaining: `${calRemaining} left` },
+          { label: t('protein'), val: totalProtein, target: proteinTarget, unit: 'g', pct: proteinPct, color: 'text-sky-400', barGradient: 'from-sky-500 to-blue-500', remaining: `${Math.max(0, proteinTarget - totalProtein)}g left` },
+          { label: t('carbs'), val: totalCarbs, target: carbsTarget, unit: 'g', pct: carbsPct, color: 'text-emerald-400', barGradient: 'from-emerald-500 to-teal-400', remaining: `${Math.max(0, carbsTarget - totalCarbs)}g left` },
+          { label: t('fats'), val: totalFat, target: fatTarget, unit: 'g', pct: fatPct, color: 'text-violet-400', barGradient: 'from-violet-500 to-purple-400', remaining: `${Math.max(0, fatTarget - totalFat)}g left` },
         ].map((m) => (
-          <div key={m.label} className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4.5 space-y-3 transition-all shadow-md backdrop-blur-xl">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-semibold">{m.label}</span>
-              <span className={`font-mono font-bold ${m.color}`}>{m.pct}%</span>
+          <div
+            key={m.label}
+            className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-3xl p-4 shadow-xl space-y-2.5 transition-all backdrop-blur-xl"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-400 font-heading">{m.label}</span>
+              <span className="text-[10px] font-mono text-slate-400">{m.remaining}</span>
             </div>
 
-            <div>
-              <div className={`text-2xl font-extrabold font-mono tracking-tight ${m.color}`}>
-                {m.val}
-                <span className="text-xs font-normal text-slate-500 ml-1">{m.unit}</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono mt-0.5">
-                <span>Target: {m.target}{m.unit}</span>
-                <span className="text-slate-500 text-[10px]">{m.remaining}</span>
-              </div>
+            <div className="flex items-baseline gap-1">
+              <span className={`text-2xl font-extrabold font-mono ${m.color}`}>{m.val}</span>
+              <span className="text-xs text-slate-400 font-medium">/ {m.target} {m.unit}</span>
             </div>
 
-            <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden p-0.5 border border-slate-800/80">
-              <div
-                className={`bg-gradient-to-r ${m.barGradient} h-full rounded-full transition-all duration-700`}
-                style={{ width: `${m.pct}%` }}
-              />
+            <div className="space-y-1">
+              <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800/80">
+                <div
+                  className={`h-full bg-gradient-to-r ${m.barGradient} transition-all duration-500 rounded-full`}
+                  style={{ width: `${m.pct}%` }}
+                />
+              </div>
+              <div className="text-right text-[10px] font-mono text-slate-400 font-bold">{m.pct}%</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── 3. FOOD BUDGET & HEALTH SNAPSHOT ──────────────────────── */}
+      {/* ── 4. Food Budget & Health Snapshot ──────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Daily Food Budget Card */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg flex items-center justify-between gap-4 backdrop-blur-xl">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-              <Wallet className="w-4 h-4 text-emerald-400" />
-              <span>Daily Nutrition Budget</span>
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <Wallet className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+                  {t('daily_budget')}
+                </h3>
+                <span className="text-[10px] text-slate-400">Target: {formatINR(dailyBudget)}/day</span>
+              </div>
             </div>
-            <div className="text-2xl font-extrabold font-mono text-emerald-400">
-              ₹{dailyBudget} <span className="text-xs font-normal text-slate-400">/ day</span>
-            </div>
-            <div className="text-xs text-slate-400 font-mono">
-              ₹{dailyBudget}/day × 30 = <strong className="text-slate-200">₹{formatINR(monthlyBudget)} / month</strong>
-            </div>
+            <button
+              onClick={() => setActiveTab('grocery')}
+              className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1 font-mono"
+            >
+              <span>Grocery Planner</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          <button
-            onClick={() => setActiveTab('grocery')}
-            className="text-xs font-bold text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 px-3.5 py-2.5 rounded-2xl border border-teal-500/30 transition-all shrink-0"
-          >
-            Grocery List →
-          </button>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-1">
+            <div className="bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">{t('daily_budget')}</span>
+              <strong className="text-slate-100 text-sm">{formatINR(dailyBudget)}</strong>
+            </div>
+            <div className="bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">{t('spent_today')}</span>
+              <strong className="text-emerald-400 text-sm">
+                {formatINR(Math.round(todayLogs.length * 35))}
+              </strong>
+            </div>
+            <div className="bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800">
+              <span className="text-[10px] text-slate-400 block">{t('remaining')}</span>
+              <strong className="text-sky-400 text-sm">
+                {formatINR(Math.max(0, dailyBudget - Math.round(todayLogs.length * 35)))}
+              </strong>
+            </div>
+          </div>
         </div>
 
-        {/* Active Dietary Regimes & Filters */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-lg space-y-2 backdrop-blur-xl">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-indigo-400" />
-            <span>Active Dietary Regimes & Safeguards</span>
+        {/* Health Goal & Dietary Safeguards Card */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+                  Dietary Safeguards
+                </h3>
+                <span className="text-[10px] text-slate-400">
+                  {preferences.length} Active preference{preferences.length === 1 ? '' : 's'}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className="text-xs font-bold text-indigo-400 hover:underline flex items-center gap-1 font-mono"
+            >
+              <span>Manage</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {preferences.length === 0 ? (
-            <div className="flex items-center justify-between pt-1">
-              <p className="text-xs text-slate-400">All standard foods allowed. No allergen restrictions active.</p>
-              <button
-                onClick={() => setActiveTab('profile')}
-                className="text-xs text-indigo-400 hover:underline font-semibold"
-              >
-                Customize →
-              </button>
+            <div className="text-xs text-slate-400 bg-slate-950/50 p-3 rounded-2xl border border-slate-800/80">
+              No dietary restrictions active. Click Manage to add allergies or preferences (Vegan, Jain, Gluten-Free).
             </div>
           ) : (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {preferences.map((p) => (
                 <span
                   key={p.preferenceId}
-                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-xl border ${
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border ${
                     p.type === 'allergy'
-                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                      : 'bg-slate-950 border-slate-700 text-slate-200'
+                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                      : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
                   }`}
                 >
                   {p.type === 'allergy' ? `⚠️ ${p.value}` : p.value}
@@ -190,13 +244,13 @@ export const Dashboard: React.FC = () => {
 
       </div>
 
-      {/* ── 4. QUICK TOOLS SHORTCUTS ──────────────────────────────── */}
+      {/* ── 5. Quick Tools Shortcuts ──────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: '5-Meal Planner', sub: 'Daily logs & macros', tab: 'logs' as const, icon: Utensils, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
           { label: 'AI Nutritionist', sub: 'Clinical advice chat', tab: 'coach' as const, icon: Bot, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
-          { label: 'Supplements', sub: 'AI budget stack', tab: 'supplements' as const, icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-          { label: 'Workout AI', sub: '1,000+ exercises', tab: 'workout' as const, icon: Dumbbell, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+          { label: 'Workout AI', sub: '1,322+ exercises', tab: 'workout' as const, icon: Dumbbell, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' },
+          { label: 'Trainer Portal', sub: 'Client Compliance', tab: 'trainer' as const, icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
         ].map((q) => {
           const Icon = q.icon;
           return (
@@ -213,7 +267,10 @@ export const Dashboard: React.FC = () => {
         })}
       </div>
 
-      {/* ── 5. TODAY'S LOGGED MEALS ───────────────────────────────── */}
+      {/* ── 6. User-Adjustable Budget Settings ─────────────────────── */}
+      <BudgetSettingsPanel />
+
+      {/* ── 7. Today's Logged Meals ───────────────────────────────── */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

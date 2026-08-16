@@ -13,11 +13,25 @@ import { WorkoutPlanView } from './components/WorkoutPlanView';
 import { SupplementView } from './components/SupplementView';
 import { GroceryPlannerView } from './components/GroceryPlannerView';
 import { ProfileView } from './components/ProfileView';
+import { TrainerPortalView } from './components/TrainerPortalView';
 import { ScannerModal } from './components/ScannerModal';
 import { SaaSModals } from './components/SaaSModals';
+import { PdfExportModal } from './components/PdfExportModal';
+import { ProductionHealthModal } from './components/ProductionHealthModal';
+import { WifiOff } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
-  const { activeTab, isOnboardingCompleted, isDarkMode } = useApp();
+  const { 
+    activeTab, 
+    isOnboardingCompleted, 
+    isDarkMode,
+    isOnline,
+    isPdfExportModalOpen,
+    setIsPdfExportModalOpen,
+    isHealthModalOpen,
+    setIsHealthModalOpen,
+    t
+  } = useApp();
 
   // Apply/remove .dark class on <html> for full-app dark/light mode
   useEffect(() => {
@@ -48,6 +62,15 @@ const MainLayout: React.FC = () => {
         ? 'bg-slate-950 text-slate-100'
         : 'bg-indigo-50 text-indigo-950'
     }`}>
+      
+      {/* Phase 28: Offline Status Banner */}
+      {!isOnline && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold flex items-center justify-center gap-2 shadow-md animate-fade-in z-50">
+          <WifiOff className="w-4 h-4" />
+          <span>{t('offline_mode')}</span>
+        </div>
+      )}
+
       <Navbar />
 
       <main className="flex-1 pb-28 sm:pb-20">
@@ -60,10 +83,19 @@ const MainLayout: React.FC = () => {
         {activeTab === 'supplements' && <SupplementView />}
         {activeTab === 'grocery'     && <GroceryPlannerView />}
         {activeTab === 'profile'     && <ProfileView />}
+        {activeTab === 'trainer'     && <TrainerPortalView />}
       </main>
 
       <ScannerModal />
       <SaaSModals />
+      <PdfExportModal
+        isOpen={isPdfExportModalOpen}
+        onClose={() => setIsPdfExportModalOpen(false)}
+      />
+      <ProductionHealthModal
+        isOpen={isHealthModalOpen}
+        onClose={() => setIsHealthModalOpen(false)}
+      />
       <BottomNavigation />
     </div>
   );

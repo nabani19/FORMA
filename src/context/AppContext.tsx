@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, DietaryPreference, MealLog, FoodItem, MealType, NutritionalInfo } from '../types';
 import { INITIAL_USER, INITIAL_PREFERENCES, INITIAL_MEAL_LOGS, INITIAL_FOOD_DATABASE } from '../data/mockFoodDatabase';
 
+import { LanguageCode, getTranslation } from '../utils/i18n';
+
 interface Toast {
   id: string;
   message: string;
@@ -18,7 +20,8 @@ export type ActiveTab =
   | 'workout'
   | 'supplements'
   | 'grocery'
-  | 'profile';
+  | 'profile'
+  | 'trainer';
 
 export type UserPlan = 'starter' | 'pro' | 'enterprise';
 
@@ -47,6 +50,16 @@ interface AppContextType {
   showToast: (message: string, type?: Toast['type']) => void;
   resetAllData: () => void;
   checkAllergenConflicts: (food: FoodItem) => string[];
+
+  // Phase 21-30 Roadmap Extensions
+  language: LanguageCode;
+  setLanguage: (lang: LanguageCode) => void;
+  t: (key: string) => string;
+  isOnline: boolean;
+  isPdfExportModalOpen: boolean;
+  setIsPdfExportModalOpen: (open: boolean) => void;
+  isHealthModalOpen: boolean;
+  setIsHealthModalOpen: (open: boolean) => void;
 
   // SaaS Pre-Launch Extensions
   userPlan: UserPlan;
@@ -165,6 +178,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isBillingModalOpen, setIsBillingModalOpen] = useState<boolean>(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
+  const [isPdfExportModalOpen, setIsPdfExportModalOpen] = useState<boolean>(false);
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState<boolean>(false);
+
+  // Phase 27: Multi-Language Localization
+  const [language, setLanguageState] = useState<LanguageCode>(() => {
+    try {
+      return (localStorage.getItem('ai_nutrition_lang') as LanguageCode) || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  const setLanguage = (lang: LanguageCode) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('ai_nutrition_lang', lang);
+    } catch (e) {
+      console.error('Failed to save language:', e);
+    }
+  };
+
+  const t = (key: string): string => getTranslation(language, key);
+
+  // Phase 28: Network Online / Offline Detection
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      showToast('🟢 Back Online: Cloud synchronization restored.', 'success');
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast('📡 Offline Mode: Nutrition logs will be cached locally.', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
@@ -522,6 +579,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast,
         resetAllData,
         checkAllergenConflicts,
+
+        // Phase 21-30 Roadmap Extensions
+        language,
+        setLanguage,
+        t,
+        isOnline,
+        isPdfExportModalOpen,
+        setIsPdfExportModalOpen,
+        isHealthModalOpen,
+        setIsHealthModalOpen,
 
         // SaaS Pre-Launch Extensions
         userPlan,

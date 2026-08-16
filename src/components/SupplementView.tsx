@@ -227,7 +227,7 @@ export const SupplementView: React.FC = () => {
             <div className="p-2 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
               <Pill className="w-6 h-6" />
             </div>
-            <h2 className="font-heading font-extrabold text-2xl text-slate-100">AI Supplement Stack & Product Matcher</h2>
+            <h2 className="font-heading font-extrabold text-2xl text-slate-100">AI Supplement Stack Advisor</h2>
             <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-1">
               <Check className="w-3 h-3" /> 100% BUDGET OBEYED
             </span>

@@ -73,8 +73,8 @@ export const Dashboard: React.FC = () => {
                 Formula: {user.calculationFormula?.toUpperCase() || 'WHO/FAO 2004'}
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-100 tracking-tight">
-              Welcome back, {user.firstName || 'Athlete'}! ✨
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-100 tracking-tight" data-testid="dashboard-hero-title">
+              Hello, {user.firstName || 'Athlete'}! 👋
             </h2>
             <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
               {todayLogs.length === 0

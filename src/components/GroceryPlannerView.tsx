@@ -261,7 +261,7 @@ export const GroceryPlannerView: React.FC = () => {
             <div className="p-2 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-400">
               <ShoppingBag className="w-6 h-6" />
             </div>
-            <h2 className="font-heading font-extrabold text-2xl text-slate-100">AI Grocery List & Market Planner</h2>
+            <h2 className="font-heading font-extrabold text-2xl text-slate-100">AI Grocery List & Budget Planner</h2>
             <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-1">
               <Check className="w-3 h-3" /> USER BUDGET OBEYED
             </span>
@@ -387,7 +387,7 @@ export const GroceryPlannerView: React.FC = () => {
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Item name (e.g., Peanut Butter, Rolled Oats)..."
+            placeholder="Add item (e.g., Organic Almonds, Peanut Butter)..."
             className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-teal-500"
           />
           <select

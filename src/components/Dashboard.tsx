@@ -117,36 +117,85 @@ export const Dashboard: React.FC = () => {
       {/* ── 3. Neat & Clean Macro Metric Cards ────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
-          { label: t('calories'), val: totalCalories, target: calTarget, unit: 'kcal', pct: calPercent, color: 'text-amber-400', barGradient: 'from-amber-500 to-orange-400', remaining: `${calRemaining} left` },
-          { label: t('protein'), val: totalProtein, target: proteinTarget, unit: 'g', pct: proteinPct, color: 'text-sky-400', barGradient: 'from-sky-500 to-blue-500', remaining: `${Math.max(0, proteinTarget - totalProtein)}g left` },
-          { label: t('carbs'), val: totalCarbs, target: carbsTarget, unit: 'g', pct: carbsPct, color: 'text-emerald-400', barGradient: 'from-emerald-500 to-teal-400', remaining: `${Math.max(0, carbsTarget - totalCarbs)}g left` },
-          { label: t('fats'), val: totalFat, target: fatTarget, unit: 'g', pct: fatPct, color: 'text-violet-400', barGradient: 'from-violet-500 to-purple-400', remaining: `${Math.max(0, fatTarget - totalFat)}g left` },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-3xl p-4 shadow-xl space-y-2.5 transition-all backdrop-blur-xl"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-400 font-heading">{m.label}</span>
-              <span className="text-[10px] font-mono text-slate-400">{m.remaining}</span>
-            </div>
-
-            <div className="flex items-baseline gap-1">
-              <span className={`text-2xl font-extrabold font-mono ${m.color}`}>{m.val}</span>
-              <span className="text-xs text-slate-400 font-medium">/ {m.target} {m.unit}</span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800/80">
-                <div
-                  className={`h-full bg-gradient-to-r ${m.barGradient} transition-all duration-500 rounded-full`}
-                  style={{ width: `${m.pct}%` }}
-                />
+          { 
+            label: t('calories'), 
+            val: totalCalories, 
+            target: calTarget, 
+            unit: 'kcal', 
+            pct: calPercent, 
+            icon: Flame,
+            color: 'text-amber-400', 
+            barGradient: 'from-amber-500 to-orange-400', 
+            remaining: `${calRemaining} left` 
+          },
+          { 
+            label: t('protein'), 
+            val: totalProtein, 
+            target: proteinTarget, 
+            unit: 'g', 
+            pct: proteinPct, 
+            icon: Dumbbell,
+            color: 'text-sky-400', 
+            barGradient: 'from-sky-500 to-blue-500', 
+            remaining: `${Math.max(0, proteinTarget - totalProtein)}g left` 
+          },
+          { 
+            label: t('carbs'), 
+            val: totalCarbs, 
+            target: carbsTarget, 
+            unit: 'g', 
+            pct: carbsPct, 
+            icon: Sparkles,
+            color: 'text-emerald-400', 
+            barGradient: 'from-emerald-500 to-teal-400', 
+            remaining: `${Math.max(0, carbsTarget - totalCarbs)}g left` 
+          },
+          { 
+            label: t('fats'), 
+            val: totalFat, 
+            target: fatTarget, 
+            unit: 'g', 
+            pct: fatPct, 
+            icon: ShieldCheck,
+            color: 'text-rose-400', 
+            barGradient: 'from-rose-500 to-pink-500', 
+            remaining: `${Math.max(0, fatTarget - totalFat)}g left` 
+          },
+        ].map((m) => {
+          const Icon = m.icon;
+          return (
+            <div
+              key={m.label}
+              className="bg-slate-900/90 border border-slate-800/90 hover:border-slate-700/80 rounded-2xl p-4 shadow-lg space-y-3 transition-all backdrop-blur-xl flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Icon className={`w-3.5 h-3.5 ${m.color}`} />
+                  <span className="text-xs font-bold text-slate-300 font-heading">{m.label}</span>
+                </div>
+                <span className={`text-[11px] font-extrabold font-mono ${m.color}`}>{m.pct}%</span>
               </div>
-              <div className="text-right text-[10px] font-mono text-slate-400 font-bold">{m.pct}%</div>
+
+              <div className="flex items-baseline gap-1.5 my-0.5">
+                <span className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${m.color}`}>{m.val}</span>
+                <span className="text-xs text-slate-400 font-mono font-medium">{m.unit}</span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800/80">
+                  <div
+                    className={`h-full bg-gradient-to-r ${m.barGradient} transition-all duration-500 rounded-full`}
+                    style={{ width: `${Math.min(100, m.pct)}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <span>Target: {m.target}{m.unit}</span>
+                  <span className="text-slate-400 font-semibold">{m.remaining}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── 4. Food Budget & Health Snapshot ──────────────────────── */}

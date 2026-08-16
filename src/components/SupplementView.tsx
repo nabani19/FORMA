@@ -1,6 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Pill, ShieldCheck, CheckCircle2, Sparkles, Lock, ArrowUpRight, TrendingUp, Check, AlertCircle, ExternalLink, Award, ShieldAlert, Zap, ShoppingCart } from 'lucide-react';
+import { 
+  Pill, 
+  ShieldCheck, 
+  CheckCircle2, 
+  Sparkles, 
+  Lock, 
+  ArrowUpRight, 
+  TrendingUp, 
+  Check, 
+  AlertCircle, 
+  ExternalLink, 
+  Award, 
+  ShieldAlert, 
+  Zap, 
+  ShoppingCart,
+  Plus,
+  Minus,
+  RotateCcw,
+  CheckSquare,
+  Square
+} from 'lucide-react';
 import { BudgetSettingsPanel } from './BudgetSettingsPanel';
 
 interface RecommendedProduct {
@@ -192,29 +212,84 @@ export const SupplementView: React.FC = () => {
     },
   ];
 
-  // ── AI Smart Budget Obedience Engine ─────────────────────────────
-  // Automatically selects the best clinical supplements in ranked order
-  // strictly fitting within userBudget with ZERO overspend.
-  let runningCost = 0;
-  const optimizedList = allSupplements.map((supp) => {
-    if (runningCost + supp.estMonthlyCostINR <= userBudget) {
-      runningCost += supp.estMonthlyCostINR;
-      return { ...supp, isIncluded: true };
+  // ── User Interactive Selection State ─────────────────────────────
+  // Default selection: automatically pick items within budget
+  const getInitialSelection = (): string[] => {
+    let running = 0;
+    const initial: string[] = [];
+    for (const supp of allSupplements) {
+      if (running + supp.estMonthlyCostINR <= userBudget) {
+        running += supp.estMonthlyCostINR;
+        initial.push(supp.id);
+      }
     }
-    return { ...supp, isIncluded: false };
-  });
+    // Fallback: at least select top essential if none fit
+    return initial.length > 0 ? initial : ['supp_3'];
+  };
 
-  const includedSupplements = optimizedList.filter((s) => s.isIncluded);
-  const optionalSupplements = optimizedList.filter((s) => !s.isIncluded);
+  const [selectedIds, setSelectedIds] = useState<string[]>(getInitialSelection);
 
-  const totalMonthlyINR = includedSupplements.reduce((acc, s) => acc + s.estMonthlyCostINR, 0);
-  const budgetRemaining = Math.max(0, userBudget - totalMonthlyINR);
-  const budgetUtilizationPct = userBudget > 0 ? Math.min(100, Math.round((totalMonthlyINR / userBudget) * 100)) : 0;
+  // Re-sync initial selection when user budget changes if user has not customized
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      // Keep existing selection if already populated, or auto-fit
+      return prev.length > 0 ? prev : getInitialSelection();
+    });
+  }, [userBudget]);
 
-  const handleExpandBudget = (additionalCost: number) => {
-    const newBudget = userBudget + additionalCost;
-    updateUser({ supplementBudgetInr: newBudget });
-    showToast(`Budget expanded to ₹${newBudget.toLocaleString('en-IN')}/mo to unlock next tier!`, 'success');
+  // Toggle single supplement on / off
+  const toggleSupplement = (id: string) => {
+    setSelectedIds((prev) => {
+      const isSelected = prev.includes(id);
+      const supp = allSupplements.find((s) => s.id === id);
+      if (isSelected) {
+        showToast(`Removed ${supp?.name?.split('(')[0] || 'Supplement'} from active stack`, 'info');
+        return prev.filter((item) => item !== id);
+      } else {
+        showToast(`Added ${supp?.name?.split('(')[0] || 'Supplement'} to active stack`, 'success');
+        return [...prev, id];
+      }
+    });
+  };
+
+  // Preset: Auto-Fit AI Recommendation strictly obeying userBudget
+  const handleAutoFitToBudget = () => {
+    let running = 0;
+    const fitted: string[] = [];
+    for (const supp of allSupplements) {
+      if (running + supp.estMonthlyCostINR <= userBudget) {
+        running += supp.estMonthlyCostINR;
+        fitted.push(supp.id);
+      }
+    }
+    setSelectedIds(fitted);
+    showToast(`Auto-fitted ${fitted.length} supplements within your ₹${userBudget} budget!`, 'success');
+  };
+
+  // Preset: Select All
+  const handleSelectAll = () => {
+    setSelectedIds(allSupplements.map((s) => s.id));
+    showToast('Selected all 6 clinical supplements!', 'info');
+  };
+
+  // Preset: Clear All
+  const handleClearAll = () => {
+    setSelectedIds([]);
+    showToast('Cleared all supplements from stack.', 'info');
+  };
+
+  // Calculations
+  const selectedSupplements = allSupplements.filter((s) => selectedIds.includes(s.id));
+  const unselectedSupplements = allSupplements.filter((s) => !selectedIds.includes(s.id));
+
+  const totalMonthlyINR = selectedSupplements.reduce((acc, s) => acc + s.estMonthlyCostINR, 0);
+  const budgetRemaining = userBudget - totalMonthlyINR;
+  const isOverBudget = totalMonthlyINR > userBudget;
+  const budgetUtilizationPct = userBudget > 0 ? Math.min(150, Math.round((totalMonthlyINR / userBudget) * 100)) : 0;
+
+  const handleExpandBudget = (targetBudget: number) => {
+    updateUser({ supplementBudgetInr: targetBudget });
+    showToast(`Budget expanded to ₹${targetBudget.toLocaleString('en-IN')}/mo!`, 'success');
   };
 
   return (
@@ -228,13 +303,17 @@ export const SupplementView: React.FC = () => {
               <Pill className="w-6 h-6" />
             </div>
             <h2 className="font-heading font-extrabold text-2xl text-slate-100">AI Supplement Stack Advisor</h2>
-            <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-1">
-              <Check className="w-3 h-3" /> 100% BUDGET OBEYED
+            <span className={`text-[10px] px-2.5 py-1 rounded-full font-mono font-bold flex items-center gap-1 border ${
+              isOverBudget
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            }`}>
+              <Check className="w-3 h-3" /> {isOverBudget ? 'OVER BUDGET' : '100% BUDGET OBEYED'}
             </span>
           </div>
           <p className="text-xs text-slate-300 mt-2 max-w-2xl leading-relaxed">
-            AI matches clinically ranked formulations to the best third-party tested Indian products strictly within your{' '}
-            <strong className="text-purple-300 font-mono">₹{userBudget.toLocaleString('en-IN')}/month</strong> budget. Includes 1-click verified purchase links.
+            Personally customize your active daily supplement stack. Select or unselect items below to match your health goals and budget cap of{' '}
+            <strong className="text-purple-300 font-mono">₹{userBudget.toLocaleString('en-IN')}/month</strong>.
           </p>
         </div>
 
@@ -242,9 +321,11 @@ export const SupplementView: React.FC = () => {
         <div className="bg-slate-950/80 border border-purple-500/30 rounded-2xl p-4 min-w-[250px] shadow-lg shrink-0">
           <div className="flex items-center justify-between text-[11px] font-semibold text-purple-300 uppercase tracking-wider mb-1">
             <span>Stack Allocation</span>
-            <span className="text-emerald-400 font-mono font-bold">{budgetUtilizationPct}% Used</span>
+            <span className={`font-mono font-bold ${isOverBudget ? 'text-rose-400' : 'text-emerald-400'}`}>
+              {budgetUtilizationPct}% Used
+            </span>
           </div>
-          <div className="text-2xl font-extrabold font-mono text-purple-400">
+          <div className={`text-2xl font-extrabold font-mono ${isOverBudget ? 'text-rose-400' : 'text-purple-400'}`}>
             ₹{totalMonthlyINR.toLocaleString('en-IN')}{' '}
             <span className="text-xs text-slate-400 font-normal">/ ₹{userBudget.toLocaleString('en-IN')}</span>
           </div>
@@ -252,14 +333,20 @@ export const SupplementView: React.FC = () => {
           {/* Mini Progress Bar */}
           <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2.5 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-purple-500 to-emerald-400 h-full rounded-full transition-all duration-500"
-              style={{ width: `${budgetUtilizationPct}%` }}
+              className={`h-full rounded-full transition-all duration-500 ${
+                isOverBudget
+                  ? 'bg-gradient-to-r from-rose-500 to-amber-500'
+                  : 'bg-gradient-to-r from-purple-500 to-emerald-400'
+              }`}
+              style={{ width: `${Math.min(100, budgetUtilizationPct)}%` }}
             />
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-2">
-            <span>{includedSupplements.length} of {allSupplements.length} Supplements</span>
-            <span className="text-emerald-300 font-bold">₹{budgetRemaining} Buffer</span>
+            <span>{selectedSupplements.length} of {allSupplements.length} Selected</span>
+            <span className={`font-bold ${isOverBudget ? 'text-rose-400' : 'text-emerald-300'}`}>
+              {isOverBudget ? `-₹${Math.abs(budgetRemaining)} Over` : `+₹${budgetRemaining} Buffer`}
+            </span>
           </div>
         </div>
       </div>
@@ -267,79 +354,111 @@ export const SupplementView: React.FC = () => {
       {/* ── Central Synchronized Budget Controller ──────────────────── */}
       <BudgetSettingsPanel />
 
-      {/* ── Combined Health Budget Summary ─────────────────────────── */}
-      <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-xs font-mono flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-slate-400">
-          <TrendingUp className="w-4 h-4 text-indigo-400" />
-          <span>Synchronized Monthly Health Investment:</span>
+      {/* ── User Selection Controls Toolbar ─────────────────────────── */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-2 text-xs text-slate-300">
+          <span className="font-bold text-purple-300">Personalize Your Stack:</span>
+          <span className="text-slate-400 hidden sm:inline">Click checkboxes or cards to select/unselect items</span>
         </div>
-        <div className="flex flex-wrap gap-3 items-center">
-          <span className="text-emerald-300">🍛 Food: <strong>₹{mealMonthlyBudget.toLocaleString('en-IN')}/mo</strong></span>
-          <span className="text-purple-300">💊 Supplements: <strong>₹{userBudget.toLocaleString('en-IN')}/mo</strong></span>
-          <span className="text-amber-300 font-bold bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/30">
-            Total: ₹{(mealMonthlyBudget + userBudget).toLocaleString('en-IN')} / month
-          </span>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleAutoFitToBudget}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all"
+            title="Auto-select best ranked items fitting your budget"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span>AI Auto-Fit</span>
+          </button>
+
+          <button
+            onClick={handleSelectAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700"
+          >
+            <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Select All ({allSupplements.length})</span>
+          </button>
+
+          <button
+            onClick={handleClearAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-300 text-xs font-bold transition-all border border-slate-700"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Clear</span>
+          </button>
         </div>
       </div>
 
-      {/* ── AI 100% Optimized Stack Banner ──────────────────────────── */}
-      <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-900/60 border border-purple-500/40 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0 mt-0.5">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              <span>AI Product Matching Engine ({includedSupplements.length} Selected)</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-bold">
-                100% In Budget
-              </span>
+      {/* ── Over Budget Warning Banner (If Applicable) ──────────────── */}
+      {isOverBudget && (
+        <div className="bg-rose-950/40 border border-rose-500/50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+            <div>
+              <h4 className="text-xs font-bold text-rose-200 font-heading">
+                Selected Stack (₹{totalMonthlyINR.toLocaleString('en-IN')}) exceeds current budget limit (₹{userBudget.toLocaleString('en-IN')})
+              </h4>
+              <p className="text-[11px] text-rose-300/80">
+                You are ₹{Math.abs(budgetRemaining).toLocaleString('en-IN')} over your monthly supplement budget.
+              </p>
             </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Strictly selected in clinical hierarchy for your <span className="text-purple-300 font-semibold">{user.healthGoal?.replace('_', ' ').toUpperCase()}</span> goal. Total cost is exactly <strong className="text-emerald-400">₹{totalMonthlyINR}</strong> (obeying your ₹{userBudget} limit).
-            </p>
           </div>
+          <button
+            onClick={() => handleExpandBudget(totalMonthlyINR)}
+            className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 font-extrabold text-xs transition-all shrink-0 shadow-md"
+          >
+            Adjust Budget to ₹{totalMonthlyINR.toLocaleString('en-IN')}/mo
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* ── 1. ACTIVE SUPPLEMENTS IN BUDGET (WITH VERIFIED PRODUCT LINKS) ─ */}
+      {/* ── 1. SELECTED ACTIVE SUPPLEMENTS ──────────────────────────── */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-300 font-mono flex items-center gap-2">
+          <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-200 font-mono flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            Active Clinical Stack & Best Product Matches ({includedSupplements.length} of {allSupplements.length})
+            Selected in Active Stack ({selectedSupplements.length} of {allSupplements.length})
           </h3>
-          <span className="text-xs font-mono text-emerald-400 font-bold">
+          <span className="text-xs font-mono text-purple-300 font-bold">
             ₹{totalMonthlyINR.toLocaleString('en-IN')} / month
           </span>
         </div>
 
-        {includedSupplements.length === 0 ? (
+        {selectedSupplements.length === 0 ? (
           <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 text-center space-y-3">
-            <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
-            <div className="text-sm font-bold text-slate-200">Budget set too low to include minimum tier</div>
+            <Pill className="w-8 h-8 text-slate-500 mx-auto" />
+            <div className="text-sm font-bold text-slate-200">No supplements currently selected</div>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Please adjust your supplement budget above (minimum ₹115/mo for Vitamin D3+K2) to activate your AI recommendations.
+              Select supplements from the options below or click AI Auto-Fit to build your personalized stack.
             </p>
             <button
-              onClick={() => handleExpandBudget(500)}
+              onClick={handleAutoFitToBudget}
               className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs transition-all shadow-md"
             >
-              Set Budget to ₹500/mo
+              Auto-Fit to ₹{userBudget} Budget
             </button>
           </div>
         ) : (
-          includedSupplements.map((supp) => (
+          selectedSupplements.map((supp) => (
             <div
               key={supp.id}
-              className="bg-slate-900/90 border border-slate-800 hover:border-purple-500/40 rounded-3xl p-5 shadow-xl transition-all space-y-4 backdrop-blur-xl relative overflow-hidden"
+              className="bg-slate-900/90 border border-purple-500/40 hover:border-purple-400 rounded-3xl p-5 shadow-xl transition-all space-y-4 backdrop-blur-xl relative overflow-hidden group"
             >
               {/* Left edge indicator */}
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-purple-500" />
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3 pl-1">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 pl-1">
+                <div className="flex items-center gap-3">
+                  {/* Interactive Toggle Checkbox Button */}
+                  <button
+                    onClick={() => toggleSupplement(supp.id)}
+                    className="p-1 rounded-xl bg-emerald-500 text-slate-950 hover:bg-rose-500 hover:text-white transition-all shrink-0 shadow-md group/btn"
+                    title="Click to unselect / remove from stack"
+                  >
+                    <Check className="w-4 h-4 block group-hover/btn:hidden" />
+                    <Minus className="w-4 h-4 hidden group-hover/btn:block" />
+                  </button>
+
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-extrabold text-slate-100 text-base font-heading">{supp.name}</h4>
@@ -350,13 +469,20 @@ export const SupplementView: React.FC = () => {
                     <span className="text-[11px] text-slate-400 font-mono">{supp.clinicalCategory}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:self-center self-end">
+
+                <div className="flex items-center gap-2.5 sm:self-center self-end">
                   <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono">
                     {supp.evidenceRating}
                   </span>
                   <span className="text-sm font-extrabold text-purple-400 font-mono bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
                     ₹{supp.estMonthlyCostINR}/mo
                   </span>
+                  <button
+                    onClick={() => toggleSupplement(supp.id)}
+                    className="text-[11px] font-bold text-slate-400 hover:text-rose-400 underline ml-1"
+                  >
+                    Unselect
+                  </button>
                 </div>
               </div>
 
@@ -373,9 +499,9 @@ export const SupplementView: React.FC = () => {
                   <strong className="text-slate-200">{supp.timing}</strong>
                 </div>
                 <div className="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800 col-span-2 sm:col-span-1">
-                  <span className="text-[10px] text-slate-400 font-medium block">Budget Status</span>
+                  <span className="text-[10px] text-slate-400 font-medium block">Selection Status</span>
                   <strong className="text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 100% In Budget
+                    <CheckCircle2 className="w-3.5 h-3.5" /> In Active Stack
                   </strong>
                 </div>
               </div>
@@ -419,30 +545,34 @@ export const SupplementView: React.FC = () => {
         )}
       </div>
 
-      {/* ── 2. OPTIONAL NEXT TIER (LOCKED BY CURRENT BUDGET) ─────────── */}
-      {optionalSupplements.length > 0 && (
+      {/* ── 2. UNSELECTED / OPTIONAL SUPPLEMENTS ──────────────────────── */}
+      {unselectedSupplements.length > 0 && (
         <div className="space-y-4 pt-4 border-t border-slate-800/80">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-2">
-              <Lock className="w-4 h-4 text-slate-500" />
-              Optional Upgrades (Requires Expanding Budget)
+              <Plus className="w-4 h-4 text-purple-400" />
+              Available Supplements to Add ({unselectedSupplements.length})
             </h3>
             <span className="text-xs text-slate-400">
-              Not included in your ₹{userBudget} cap
+              Click "+ Add to Stack" to include in your personalized regimen
             </span>
           </div>
 
           <div className="space-y-3">
-            {optionalSupplements.map((supp) => {
-              const shortfall = supp.estMonthlyCostINR - budgetRemaining;
-              return (
-                <div
-                  key={supp.id}
-                  className="bg-slate-900/40 border border-slate-800/70 rounded-2xl p-4 transition-all opacity-85 hover:opacity-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
+            {unselectedSupplements.map((supp) => (
+              <div
+                key={supp.id}
+                onClick={() => toggleSupplement(supp.id)}
+                className="bg-slate-900/40 border border-slate-800/80 hover:border-purple-500/40 rounded-2xl p-4 transition-all opacity-85 hover:opacity-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-lg border border-slate-700 bg-slate-950 flex items-center justify-center text-slate-500 group-hover:border-purple-400 group-hover:text-purple-300 transition-all shrink-0 mt-0.5">
+                    <Plus className="w-4 h-4" />
+                  </div>
+
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold text-slate-300 font-heading">{supp.name}</span>
+                      <span className="text-xs font-bold text-slate-300 font-heading group-hover:text-slate-100">{supp.name}</span>
                       <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
                         {supp.benefitBadge}
                       </span>
@@ -450,23 +580,25 @@ export const SupplementView: React.FC = () => {
                         ₹{supp.estMonthlyCostINR}/mo
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 max-w-2xl">{supp.rationale}</p>
+                    <p className="text-[11px] text-slate-400 max-w-2xl leading-relaxed">{supp.rationale}</p>
                     <div className="text-[10px] text-slate-500 font-mono">
                       Recommended: {supp.product.brand} · ₹{supp.product.retailPriceINR} ({supp.product.packDetails})
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => handleExpandBudget(shortfall > 0 ? shortfall : supp.estMonthlyCostINR)}
-                    className="px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500 hover:text-slate-950 border border-purple-500/30 text-purple-300 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 shrink-0"
-                    title={`Expand budget by ₹${shortfall} to unlock`}
-                  >
-                    <span>+ Add (₹{supp.estMonthlyCostINR}/mo)</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
                 </div>
-              );
-            })}
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSupplement(supp.id);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-purple-500/10 group-hover:bg-purple-500 group-hover:text-slate-950 border border-purple-500/30 text-purple-300 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 shrink-0 self-end sm:self-center"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add to Stack</span>
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

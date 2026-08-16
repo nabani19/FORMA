@@ -10,6 +10,17 @@ interface Toast {
   type: 'success' | 'warning' | 'error' | 'info';
 }
 
+export interface AestheticMeasurement {
+  id: string;
+  date: string;
+  shouldersInches: number;
+  waistInches: number;
+  chestInches?: number;
+  armsInches?: number;
+  ratio: number;
+  status: string;
+}
+
 export type ActiveTab = 
   | 'dashboard'
   | 'scanner'
@@ -18,6 +29,7 @@ export type ActiveTab =
   | 'coach'
   | 'medical'
   | 'workout'
+  | 'aesthetic'
   | 'supplements'
   | 'grocery'
   | 'profile'
@@ -60,6 +72,11 @@ interface AppContextType {
   setIsPdfExportModalOpen: (open: boolean) => void;
   isHealthModalOpen: boolean;
   setIsHealthModalOpen: (open: boolean) => void;
+
+  // Aesthetic Physique Blueprint Suite
+  aestheticHistory: AestheticMeasurement[];
+  addAestheticMeasurement: (m: { shouldersInches: number; waistInches: number; chestInches?: number; armsInches?: number }) => void;
+  deleteAestheticMeasurement: (id: string) => void;
 
   // SaaS Pre-Launch Extensions
   userPlan: UserPlan;
@@ -203,6 +220,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Phase 28: Network Online / Offline Detection
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  // Aesthetic Physique Blueprint Measurement Tracking
+  const [aestheticHistory, setAestheticHistory] = useState<AestheticMeasurement[]>(() => {
+    try {
+      const saved = localStorage.getItem('ai_aesthetic_history');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Failed to parse saved aesthetic history:', e);
+    }
+    return [
+      {
+        id: 'aest_1',
+        date: new Date(Date.now() - 14 * 86400000).toISOString(),
+        shouldersInches: 47.5,
+        waistInches: 32.0,
+        chestInches: 40.5,
+        armsInches: 15.0,
+        ratio: 1.484,
+        status: 'V-Taper Athletic',
+      },
+      {
+        id: 'aest_2',
+        date: new Date(Date.now() - 7 * 86400000).toISOString(),
+        shouldersInches: 48.0,
+        waistInches: 31.5,
+        chestInches: 41.0,
+        armsInches: 15.2,
+        ratio: 1.524,
+        status: 'V-Taper Aesthetic',
+      },
+      {
+        id: 'aest_3',
+        date: new Date().toISOString(),
+        shouldersInches: 48.5,
+        waistInches: 31.0,
+        chestInches: 41.5,
+        armsInches: 15.5,
+        ratio: 1.565,
+        status: 'Near Adonis Target',
+      },
+    ];
+  });
+
+  const addAestheticMeasurement = (m: { shouldersInches: number; waistInches: number; chestInches?: number; armsInches?: number }) => {
+    const ratio = Number((m.shouldersInches / Math.max(0.1, m.waistInches)).toFixed(3));
+    let status = 'Developing Taper';
+    if (ratio >= 1.618) status = 'Golden Adonis Frame (1.618+)';
+    else if (ratio >= 1.55) status = 'Near Adonis Target';
+    else if (ratio >= 1.45) status = 'V-Taper Aesthetic';
+    else if (ratio >= 1.30) status = 'V-Taper Athletic';
+
+    const newEntry: AestheticMeasurement = {
+      id: `aest_${Date.now()}`,
+      date: new Date().toISOString(),
+      shouldersInches: m.shouldersInches,
+      waistInches: m.waistInches,
+      chestInches: m.chestInches,
+      armsInches: m.armsInches,
+      ratio,
+      status,
+    };
+
+    setAestheticHistory((prev) => {
+      const updated = [newEntry, ...prev];
+      try {
+        localStorage.setItem('ai_aesthetic_history', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save aesthetic history:', e);
+      }
+      return updated;
+    });
+
+    showToast(`Logged V-Taper measurement: ${ratio} Ratio (${status})`, 'success');
+  };
+
+  const deleteAestheticMeasurement = (id: string) => {
+    setAestheticHistory((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      try {
+        localStorage.setItem('ai_aesthetic_history', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save aesthetic history:', e);
+      }
+      return updated;
+    });
+    showToast('Measurement deleted from history.', 'info');
+  };
 
   useEffect(() => {
     const handleOnline = () => {
@@ -589,6 +693,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsPdfExportModalOpen,
         isHealthModalOpen,
         setIsHealthModalOpen,
+
+        // Aesthetic Physique Blueprint Suite
+        aestheticHistory,
+        addAestheticMeasurement,
+        deleteAestheticMeasurement,
 
         // SaaS Pre-Launch Extensions
         userPlan,

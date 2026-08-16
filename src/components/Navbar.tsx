@@ -95,6 +95,8 @@ export const Navbar: React.FC = () => {
         // Command routing
         if (transcript.includes('scan') || transcript.includes('camera') || transcript.includes('photo')) {
           setIsScannerOpen(true);
+        } else if (transcript.includes('aesthetic') || transcript.includes('taper') || transcript.includes('adonis') || transcript.includes('golden')) {
+          setActiveTab('aesthetic');
         } else if (transcript.includes('workout') || transcript.includes('exercise') || transcript.includes('gym')) {
           setActiveTab('workout');
         } else if (transcript.includes('grocery') || transcript.includes('market') || transcript.includes('shopping')) {
@@ -142,6 +144,7 @@ export const Navbar: React.FC = () => {
     { id: 'logs',        label: 'Meal Log & Planner', sub: '5-Meals daily history & budget', icon: Utensils,    color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
     { id: 'coach',       label: 'AI Nutrition Coach', sub: 'Interactive clinical advice',     icon: Bot,         color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
     { id: 'medical',     label: 'Medical Biomarkers', sub: 'Blood test report risk audit',    icon: Activity,    color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+    { id: 'aesthetic',   label: 'Aesthetic V-Taper',  sub: 'Adonis ratio & V-Taper splits',   icon: Sparkles,    color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
     { id: 'workout',     label: 'Workout Generator',  sub: '1,322+ exercises & 1RM engine',   icon: Dumbbell,    color: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
     { id: 'supplements', label: 'Supplement Advisor', sub: 'Clinical stack & buy links',      icon: Pill,        color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
     { id: 'grocery',     label: 'Grocery AI Planner', sub: '2026 Indian market prices',       icon: ShoppingBag, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
@@ -154,7 +157,7 @@ export const Navbar: React.FC = () => {
     setIsMoreDropdownOpen(false);
   };
 
-  const isCurrentTabInMore = ['logs', 'coach', 'medical', 'workout', 'supplements', 'grocery', 'analytics', 'trainer'].includes(activeTab);
+  const isCurrentTabInMore = ['logs', 'coach', 'medical', 'workout', 'aesthetic', 'supplements', 'grocery', 'analytics', 'trainer'].includes(activeTab);
   const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   return (

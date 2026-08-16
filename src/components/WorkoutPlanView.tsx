@@ -36,7 +36,7 @@ interface WorkoutSetLog {
 }
 
 export const WorkoutPlanView: React.FC = () => {
-  const { user, showToast } = useApp();
+  const { showToast, setActiveTab: setGlobalActiveTab } = useApp();
 
   const [activeTab, setActiveTab] = useState<'routine' | 'anatomy_library' | 'logger'>('routine');
   const [activeSplit, setActiveSplit] = useState<'Push Pull Legs' | 'Upper Lower' | 'Full Body 4-Day'>('Push Pull Legs');
@@ -189,6 +189,13 @@ export const WorkoutPlanView: React.FC = () => {
             }`}
           >
             1,000+ Exercise Anatomy
+          </button>
+          <button
+            onClick={() => setGlobalActiveTab('aesthetic')}
+            className="px-3 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Aesthetic V-Taper</span>
           </button>
         </div>
       </div>

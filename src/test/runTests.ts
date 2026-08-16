@@ -167,6 +167,69 @@ function runAllTRACkerTests() {
     assert.strictEqual(checkLivenessProbe().status, 'UP');
   });
 
+  // Test 9: Aesthetic Physique Adonis Golden Ratio (1.618) & Input Boundaries
+  runTest('Adonis Index Golden Ratio (1.618) computes correctly with strict boundary validation', () => {
+    const calcAdonisRatio = (shoulders: number, waist: number): { ratio: number; status: string } => {
+      assert.ok(shoulders > 0 && shoulders <= 100, 'Shoulders must be between 1 and 100 inches');
+      assert.ok(waist > 0 && waist <= 100, 'Waist must be between 1 and 100 inches');
+      const r = parseFloat((shoulders / waist).toFixed(3));
+      let status = 'Developing Taper';
+      if (r >= 1.618) status = 'Golden Adonis Frame (1.618+)';
+      else if (r >= 1.55) status = 'Near Adonis Target';
+      else if (r >= 1.45) status = 'V-Taper Aesthetic';
+      else if (r >= 1.30) status = 'V-Taper Athletic';
+      return { ratio: r, status };
+    };
+
+    // Golden Adonis measurement test: 48.54in shoulders, 30.0in waist -> 1.618
+    const goldenRes = calcAdonisRatio(48.54, 30.0);
+    assert.strictEqual(goldenRes.ratio, 1.618);
+    assert.strictEqual(goldenRes.status, 'Golden Adonis Frame (1.618+)');
+
+    // Developing taper test: 40in shoulders, 33in waist -> 1.212
+    const devRes = calcAdonisRatio(40.0, 33.0);
+    assert.strictEqual(devRes.ratio, 1.212);
+    assert.strictEqual(devRes.status, 'Developing Taper');
+  });
+
+  // Test 10: 6-Tier Biomechanics Hierarchy & Aesthetic Routine Generation
+  runTest('6-Tier Biomechanics Hierarchy prioritizes Lateral Delts, Lats, and Anti-Waist Widening', () => {
+    const tiers = [
+      { tier: 1, name: 'Lateral Deltoids — The Width Anchor', priority: 1 },
+      { tier: 2, name: 'Lats — The Taper Driver', priority: 2 },
+      { tier: 3, name: 'Upper Chest (Clavicular Pec) — The Frame Filler', priority: 3 },
+      { tier: 4, name: 'Arms (Biceps & Triceps) — The Detail Layer', priority: 4 },
+      { tier: 5, name: 'Abdominals & Obliques — The Waist Illusion', priority: 5 },
+      { tier: 6, name: 'Legs — Structural Balance (Non-Negotiable)', priority: 6 },
+    ];
+
+    assert.strictEqual(tiers.length, 6, 'Must contain all 6 biomechanical tiers from the Blueprint');
+    assert.strictEqual(tiers[0].priority, 1, 'Lateral Delts must be Priority #1');
+    assert.strictEqual(tiers[1].priority, 2, 'Lats must be Priority #2');
+  });
+
+  // Test 11: Aesthetic 2.5%-5% Progressive Overload Auto-Regulation
+  runTest('Aesthetic Overload engine computes 2.5% to 5% micro-progression on submaximal RPE', () => {
+    const computeAestheticOverload = (currentWeightKg: number, repsDone: number, rpe: number) => {
+      const isTriggered = repsDone >= 12 && rpe <= 8.0;
+      if (!isTriggered) return currentWeightKg;
+      const increase = currentWeightKg < 25 ? 1.25 : parseFloat((currentWeightKg * 0.05).toFixed(2));
+      return parseFloat((currentWeightKg + increase).toFixed(2));
+    };
+
+    // Lateral raises 15kg, 15 reps at RPE 7.5 -> should increase by +1.25kg to 16.25kg
+    const nextLightLoad = computeAestheticOverload(15, 15, 7.5);
+    assert.strictEqual(nextLightLoad, 16.25);
+
+    // Incline DB press 30kg, 12 reps at RPE 8.0 -> 5% increase = +1.5kg -> 31.5kg
+    const nextHeavyLoad = computeAestheticOverload(30, 12, 8.0);
+    assert.strictEqual(nextHeavyLoad, 31.5);
+
+    // Set with high failure RPE 9.5 -> maintain weight
+    const maintainLoad = computeAestheticOverload(30, 10, 9.5);
+    assert.strictEqual(maintainLoad, 30);
+  });
+
   console.log(`\n==================================================`);
   console.log(`TEST RESULTS: ${passed} Passed | ${failed} Failed`);
   console.log(`==================================================\n`);

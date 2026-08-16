@@ -198,6 +198,36 @@ export const Dashboard: React.FC = () => {
         })}
       </div>
 
+      {/* ── 3.5. Aesthetic V-Taper & Adonis Golden Ratio Banner ──── */}
+      <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border border-amber-500/40 rounded-3xl p-5 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="p-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-extrabold text-slate-100 font-heading">
+                Aesthetic Physique Blueprint (Adonis Index Φ = 1.618)
+              </h3>
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-md font-mono font-bold">
+                Biomechanics V-Taper
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+              Calculate your shoulder-to-waist ratio, explore the 6-tier muscle hierarchy (Side Delts, Lats, Upper Chest), and generate periodized aesthetic workout splits.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setActiveTab('aesthetic')}
+          className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 shrink-0 self-stretch sm:self-auto justify-center"
+        >
+          <span>Open V-Taper Blueprint</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
       {/* ── 4. Food Budget & Health Snapshot ──────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 

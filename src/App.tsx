@@ -10,6 +10,7 @@ import { AnalyticsView } from './components/AnalyticsView';
 import { CoachView } from './components/CoachView';
 import { MedicalReportView } from './components/MedicalReportView';
 import { WorkoutPlanView } from './components/WorkoutPlanView';
+import { AestheticPhysiqueView } from './components/AestheticPhysiqueView';
 import { SupplementView } from './components/SupplementView';
 import { GroceryPlannerView } from './components/GroceryPlannerView';
 import { ProfileView } from './components/ProfileView';
@@ -80,6 +81,7 @@ const MainLayout: React.FC = () => {
         {activeTab === 'coach'       && <CoachView />}
         {activeTab === 'medical'     && <MedicalReportView />}
         {activeTab === 'workout'     && <WorkoutPlanView />}
+        {activeTab === 'aesthetic'   && <AestheticPhysiqueView />}
         {activeTab === 'supplements' && <SupplementView />}
         {activeTab === 'grocery'     && <GroceryPlannerView />}
         {activeTab === 'profile'     && <ProfileView />}

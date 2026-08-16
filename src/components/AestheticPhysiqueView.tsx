@@ -359,12 +359,20 @@ export const AestheticPhysiqueView: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <button
-              onClick={() => setIsPdfExportModalOpen(true)}
+            <a
+              href="/aesthetic-physique-blueprint.pdf"
+              download="The-Aesthetic-Physique-Blueprint.pdf"
               className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
             >
               <FileText className="w-4 h-4" />
-              <span>Export V-Taper Blueprint</span>
+              <span>Download Blueprint PDF</span>
+            </a>
+            <button
+              onClick={() => setIsPdfExportModalOpen(true)}
+              className="flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-2xl transition-all"
+            >
+              <FileText className="w-4 h-4 text-emerald-400" />
+              <span>Export Report</span>
             </button>
             <button
               onClick={() => setActiveTab('workout')}

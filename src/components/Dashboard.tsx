@@ -17,7 +17,6 @@ import {
   Server
 } from 'lucide-react';
 import { BudgetSettingsPanel } from './BudgetSettingsPanel';
-import { GamificationWidget } from './GamificationWidget';
 import { getStartOfToday, deriveDailyBudget, formatINR } from '../utils/nutritionUtils';
 
 export const Dashboard: React.FC = () => {
@@ -111,10 +110,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ── 2. Phase 25: Gamification & Streak Badges Hub ─────────── */}
-      <GamificationWidget />
-
-      {/* ── 3. Neat & Clean Macro Metric Cards ────────────────────── */}
+      {/* ── 2. Neat & Clean Macro Metric Cards ────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
           { 

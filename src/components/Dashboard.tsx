@@ -108,6 +108,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
           { 
+            key: 'calories',
             label: t('calories'), 
             val: totalCalories, 
             target: calTarget, 
@@ -119,6 +120,7 @@ export const Dashboard: React.FC = () => {
             remaining: `${calRemaining} left` 
           },
           { 
+            key: 'protein',
             label: t('protein'), 
             val: totalProtein, 
             target: proteinTarget, 
@@ -130,6 +132,7 @@ export const Dashboard: React.FC = () => {
             remaining: `${Math.max(0, proteinTarget - totalProtein)}g left` 
           },
           { 
+            key: 'carbs',
             label: t('carbs'), 
             val: totalCarbs, 
             target: carbsTarget, 
@@ -141,6 +144,7 @@ export const Dashboard: React.FC = () => {
             remaining: `${Math.max(0, carbsTarget - totalCarbs)}g left` 
           },
           { 
+            key: 'fats',
             label: t('fats'), 
             val: totalFat, 
             target: fatTarget, 
@@ -157,17 +161,18 @@ export const Dashboard: React.FC = () => {
             <div
               key={m.label}
               className="bg-slate-900/90 border border-slate-800/90 hover:border-slate-700/80 rounded-2xl p-4 shadow-lg space-y-3 transition-all backdrop-blur-xl flex flex-col justify-between"
+              data-testid={`macro-card-${m.key}`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Icon className={`w-3.5 h-3.5 ${m.color}`} />
                   <span className="text-xs font-bold text-slate-300 font-heading">{m.label}</span>
                 </div>
-                <span className={`text-[11px] font-extrabold font-mono ${m.color}`}>{m.pct}%</span>
+                <span className={`text-[11px] font-extrabold font-mono ${m.color}`} data-testid={`macro-pct-${m.key}`}>{m.pct}%</span>
               </div>
 
               <div className="flex items-baseline gap-1.5 my-0.5">
-                <span className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${m.color}`}>{m.val}</span>
+                <span className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${m.color}`} data-testid={`macro-val-${m.key}`}>{m.val}</span>
                 <span className="text-xs text-slate-400 font-mono font-medium">{m.unit}</span>
               </div>
 

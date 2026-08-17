@@ -58,6 +58,31 @@ test.describe('CUJ-03: 7-Day Meal Schedule & Eaten Checkoffs', () => {
     await expect(modal).not.toBeVisible();
   });
 
+  test('Sync Verification: Marking meals as eaten updates Dashboard calories, protein and macros dynamically', async ({ authenticatedPage }) => {
+    // 1. Navigate to Meal Logs tab
+    const mealLogTab = authenticatedPage.getByTestId('tab-logs');
+    if (!await mealLogTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await mealLogTab.click();
+    await expect(authenticatedPage.getByTestId('meal-log-view')).toBeVisible();
+
+    // 2. Mark breakfast and lunch as eaten
+    await authenticatedPage.getByTestId('meal-eaten-btn-0').click();
+    await authenticatedPage.getByTestId('meal-eaten-btn-2').click();
+
+    // 3. Switch back to Dashboard
+    await authenticatedPage.getByTestId('tab-dashboard').click();
+    await expect(authenticatedPage.getByTestId('dashboard-view')).toBeVisible();
+
+    // 4. Verify Dashboard macro cards are NOT 0 kcal/0g and display consumed values
+    const calDisplay = authenticatedPage.getByTestId('macro-val-calories');
+    await expect(calDisplay).not.toHaveText('0');
+
+    const protDisplay = authenticatedPage.getByTestId('macro-val-protein');
+    await expect(protDisplay).not.toHaveText('0');
+  });
+
   test('Failure / Empty State: Search filter with no match displays empty feedback', async ({ authenticatedPage }) => {
     const mealLogTab = authenticatedPage.getByTestId('tab-logs');
     if (!await mealLogTab.isVisible()) {

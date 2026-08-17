@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, DietaryPreference, MealLog, FoodItem, MealType, NutritionalInfo } from '../types';
+import { User, DietaryPreference, MealLog, FoodItem, MealType, NutritionalInfo, DayOfWeek } from '../types';
+import { PlannedMeal } from '../data/weeklyMealPlans';
 import { INITIAL_USER, INITIAL_PREFERENCES, INITIAL_MEAL_LOGS, INITIAL_FOOD_DATABASE } from '../data/mockFoodDatabase';
 import { LanguageCode, getTranslation } from '../utils/i18n';
 import { stripHtml } from '../utils/securityEngine';
@@ -74,6 +75,11 @@ interface AppContextType {
   setIsPdfExportModalOpen: (open: boolean) => void;
   isHealthModalOpen: boolean;
   setIsHealthModalOpen: (open: boolean) => void;
+
+  // Eaten Planned Meals Sync
+  eatenMeals: Record<string, boolean>;
+  togglePlannedMealEaten: (day: DayOfWeek, mealIndex: number, meal: PlannedMeal) => void;
+  isPlannedMealEaten: (day: DayOfWeek, mealIndex: number) => boolean;
 
   // Aesthetic Physique Blueprint Suite
   aestheticHistory: AestheticMeasurement[];
@@ -162,6 +168,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return INITIAL_MEAL_LOGS;
     }
   });
+
+  const [eatenMeals, setEatenMeals] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('ai_eaten_meals');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ai_eaten_meals', JSON.stringify(eatenMeals));
+    } catch (e) {
+      console.error('Failed to save eaten meals:', e);
+    }
+  }, [eatenMeals]);
 
   const [foodDatabase] = useState<FoodItem[]>(INITIAL_FOOD_DATABASE);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
@@ -648,15 +671,91 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Welcome! Your profile has been initialized.', 'success');
   };
 
+  const togglePlannedMealEaten = (day: DayOfWeek, mealIndex: number, meal: PlannedMeal) => {
+    const key = `${day}-${mealIndex}`;
+    const willBeEaten = !eatenMeals[key];
+
+    setEatenMeals((prev) => {
+      const updated = { ...prev };
+      if (willBeEaten) {
+        updated[key] = true;
+      } else {
+        delete updated[key];
+      }
+      return updated;
+    });
+
+    if (willBeEaten) {
+      const slotLower = meal.slot.toLowerCase();
+      const targetType: MealType = 
+        slotLower.includes('breakfast') ? 'breakfast' :
+        slotLower.includes('morning') ? 'morning_snack' :
+        slotLower.includes('lunch') ? 'lunch' :
+        slotLower.includes('evening') ? 'evening_snack' : 'dinner';
+
+      const newLog: MealLog = {
+        logId: `planned_${day}_${mealIndex}`,
+        plannedMealKey: key,
+        userId: user.userId,
+        foodItemId: meal.id || `planned_${day}_${mealIndex}`,
+        foodName: meal.name,
+        imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
+        mealType: targetType,
+        portionSizeGrams: parseInt(meal.portion) || 250,
+        calculatedNutrients: {
+          calories: Math.round(meal.kcal),
+          protein_g: Math.round(meal.protein),
+          carbs_g: Math.round(meal.carbs),
+          netCarbs_g: Math.round(meal.carbs - (meal.fiber || 5)),
+          fat_g: Math.round(meal.fat),
+          fiber_g: Math.round(meal.fiber || 5),
+          sugar_g: 3,
+          vitamins: {
+            d_iu: meal.micronutrients?.vitaminD_iu || 0,
+            c_mg: 15,
+            a_iu: 250,
+            b12_mcg: 1,
+          },
+          minerals: {
+            calcium_mg: meal.micronutrients?.calciumMg || 100,
+            iron_mg: meal.micronutrients?.ironMg || 4,
+            potassium_mg: meal.micronutrients?.potassiumMg || 450,
+            sodium_mg: meal.micronutrients?.sodiumMg || 300,
+            magnesium_mg: 60,
+            zinc_mg: meal.micronutrients?.zincMg || 2.5,
+          }
+        },
+        costInr: meal.costInr,
+        dayOfWeek: day,
+        loggedAt: new Date().toISOString(),
+      };
+
+      setMealLogs((prev) => {
+        const filtered = prev.filter((l) => l.plannedMealKey !== key);
+        return [newLog, ...filtered];
+      });
+      showToast(`✓ Marked ${meal.name} as Eaten (+${meal.kcal} kcal, +${meal.protein}g P)`, 'success');
+    } else {
+      setMealLogs((prev) => prev.filter((l) => l.plannedMealKey !== key));
+      showToast(`Marked ${meal.name} as not eaten.`, 'info');
+    }
+  };
+
+  const isPlannedMealEaten = (day: DayOfWeek, mealIndex: number) => {
+    return !!eatenMeals[`${day}-${mealIndex}`];
+  };
+
   const resetAllData = () => {
     setUser(INITIAL_USER);
     setPreferences(INITIAL_PREFERENCES);
     setMealLogs(INITIAL_MEAL_LOGS);
+    setEatenMeals({});
     try {
       localStorage.removeItem('ai_nutrition_user');
       localStorage.removeItem('ai_nutrition_preferences');
       localStorage.removeItem('ai_nutrition_meal_logs');
       localStorage.removeItem('ai_nutrition_onboarded');
+      localStorage.removeItem('ai_eaten_meals');
     } catch (e) {
       console.error('Failed to clear localStorage:', e);
     }
@@ -700,6 +799,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsPdfExportModalOpen,
         isHealthModalOpen,
         setIsHealthModalOpen,
+
+        // Eaten Planned Meals Sync
+        eatenMeals,
+        togglePlannedMealEaten,
+        isPlannedMealEaten,
 
         // Aesthetic Physique Blueprint Suite
         aestheticHistory,

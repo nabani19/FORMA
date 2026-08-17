@@ -103,6 +103,7 @@ export interface MealLog {
   calculatedNutrients: NutritionalInfo;
   costInr?: number;
   dayOfWeek?: DayOfWeek;
+  plannedMealKey?: string;
   loggedAt: string;
 }
 

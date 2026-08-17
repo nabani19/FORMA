@@ -26,22 +26,25 @@ import { MealDetailsModal } from './MealDetailsModal';
 import { getStartOfToday, deriveDailyBudget, formatINR } from '../utils/nutritionUtils';
 
 export const MealLogView: React.FC = () => {
-  const { mealLogs, deleteMealLog, updateMealLogPortion, setIsScannerOpen, user } = useApp();
+  const { 
+    mealLogs, 
+    deleteMealLog, 
+    updateMealLogPortion, 
+    setIsScannerOpen, 
+    user,
+    eatenMeals,
+    togglePlannedMealEaten,
+    isPlannedMealEaten
+  } = useApp();
   const [filterMealType, setFilterMealType] = useState<MealType | 'all'>('all');
   const [searchQuery, setSearchQuery]         = useState<string>('');
   const [selectedDay, setSelectedDay]         = useState<DayOfWeek>('friday');
   const [editingLogId, setEditingLogId]       = useState<string | null>(null);
   const [editPortion, setEditPortion]         = useState<number>(100);
-  
-  // Track which planned meal slots have been eaten today
-  const [eatenMeals, setEatenMeals]           = useState<Record<string, boolean>>({});
 
   // Active meal for Recipe & Nutrient Details Modal popup
   const [selectedMealForModal, setSelectedMealForModal] = useState<PlannedMeal | null>(null);
   const [isMealModalOpen, setIsMealModalOpen]           = useState<boolean>(false);
-
-  const toggleEaten = (key: string) =>
-    setEatenMeals((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const daysOfWeek: { id: DayOfWeek; label: string; short: string }[] = [
     { id: 'monday',    label: 'Monday',    short: 'Mon' },
@@ -321,8 +324,7 @@ export const MealLogView: React.FC = () => {
 
         <div className="space-y-2.5">
           {planMeals.map((meal, idx) => {
-            const eatenKey = `${selectedDay}-${idx}`;
-            const isEaten  = !!eatenMeals[eatenKey];
+            const isEaten = isPlannedMealEaten(selectedDay, idx);
             return (
               <div
                 key={idx}
@@ -339,7 +341,7 @@ export const MealLogView: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleEaten(eatenKey);
+                      togglePlannedMealEaten(selectedDay, idx, meal);
                     }}
                     title={isEaten ? 'Mark as not eaten' : 'Mark as eaten'}
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
@@ -508,12 +510,12 @@ export const MealLogView: React.FC = () => {
           setIsMealModalOpen(false);
           setSelectedMealForModal(null);
         }}
-        isEaten={selectedMealForModal ? !!eatenMeals[`${selectedDay}-${dayPlan.meals.findIndex(m => m.id === selectedMealForModal.id)}`] : false}
+        isEaten={selectedMealForModal ? isPlannedMealEaten(selectedDay, dayPlan.meals.findIndex(m => m.id === selectedMealForModal.id)) : false}
         onToggleEaten={() => {
           if (selectedMealForModal) {
             const idx = dayPlan.meals.findIndex(m => m.id === selectedMealForModal.id);
             if (idx !== -1) {
-              toggleEaten(`${selectedDay}-${idx}`);
+              togglePlannedMealEaten(selectedDay, idx, selectedMealForModal);
             }
           }
         }}

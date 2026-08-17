@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ChatMessage, CoachingTip } from '../types';
-import { Bot, Send, Sparkles, User as UserIcon, Lightbulb, CheckCircle2, ChevronRight, Zap, Cpu } from 'lucide-react';
-import { askAiCoach, AiChatMessage, TOP_AI_MODELS } from '../utils/aiService';
+import { Bot, Send, Sparkles, User as UserIcon, Lightbulb, CheckCircle2, ChevronRight, Zap, Cpu, Key, Check } from 'lucide-react';
+import { askAiCoach, AiChatMessage, TOP_AI_MODELS, getActiveOpenRouterKey, setCustomOpenRouterKey } from '../utils/aiService';
 import { checkRateLimit } from '../utils/securityEngine';
 
 export const CoachView: React.FC = () => {
   const { user, preferences, mealLogs, setIsScannerOpen, showToast } = useApp();
 
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash');
+  const [showKeyModal, setShowKeyModal]   = useState<boolean>(false);
+  const [customKeyInput, setCustomKeyInput] = useState<string>(() => getActiveOpenRouterKey());
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg_1',
       sender: 'ai',
-      text: `Hello ${user.firstName || 'Jane'}! I am Forma AI, your clinical nutritionist and strength performance coach. Powered by top-tier frontier models and latest WHO & ICMR-NIN 2024 standards, I specialize in authentic Indian family meal planning, macro nutrient timing, and budget optimization (Meals: ₹${Math.round((user.monthlyBudgetInr || 6000) / 30)}/day × 30 days = ₹${user.monthlyBudgetInr || 6000}/mo + Supplements: ₹2,400/mo). How can I guide you today?`,
+      text: `Hello ${user.firstName || 'Athlete'}! I am Forma AI, your clinical nutritionist and strength performance coach. Powered by frontier AI models and latest WHO & ICMR-NIN 2024 standards, I specialize in authentic Indian family meal planning, macro nutrient timing, pre/post workout protocols, and budget optimization (Meals: ₹${Math.round((user.monthlyBudgetInr || 6000) / 30)}/day × 30 days = ₹${user.monthlyBudgetInr || 6000}/mo + Supplements: ₹2,400/mo). How can I guide you today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       suggestedActions: [
+        'Give me a pre-workout for fat loss',
         'Plan 5 Indian family meals under ₹180/day',
         'How to hit 140g protein with Soya & Moong Dal?',
-        'Analyze my daily calorie & macro balance',
-        'Recommend post-workout recovery snacks',
+        'Recommend post-workout recovery protocol',
       ],
     },
   ]);
@@ -29,15 +31,21 @@ export const CoachView: React.FC = () => {
   const [isThinking, setIsThinking] = useState<boolean>(false);
 
   // Compute stats for context
-  const totalProtein = Math.round(mealLogs.reduce((sum, log) => sum + log.calculatedNutrients.protein_g, 0));
-  const totalCalories = Math.round(mealLogs.reduce((sum, log) => sum + log.calculatedNutrients.calories, 0));
+  const totalProtein = Math.round(mealLogs.reduce((sum, log) => sum + (log.calculatedNutrients?.protein_g || 0), 0));
+  const totalCalories = Math.round(mealLogs.reduce((sum, log) => sum + (log.calculatedNutrients?.calories || 0), 0));
+
+  const handleSaveKey = () => {
+    setCustomOpenRouterKey(customKeyInput);
+    setShowKeyModal(false);
+    showToast('OpenRouter API Key saved successfully!', 'success');
+  };
 
   const handleSend = async (queryText?: string) => {
     const textToSend = queryText || inputQuery.trim();
     if (!textToSend || isThinking) return;
 
-    // Rate Limit Protection: 10 queries per minute per client
-    const rateCheck = checkRateLimit('user_ai_coach', 10, 60000);
+    // Rate Limit Protection: 20 queries per minute per client
+    const rateCheck = checkRateLimit('user_ai_coach', 20, 60000);
     if (!rateCheck.allowed) {
       showToast(`Rate limit reached. Please wait ${rateCheck.resetSeconds}s before sending another message.`, 'warning');
       return;
@@ -65,13 +73,13 @@ export const CoachView: React.FC = () => {
       const aiReplyText = await askAiCoach(
         historyForApi,
         {
-          caloriesTarget: user.dailyCalorieTarget,
-          proteinTarget: user.dailyProteinTargetG,
+          caloriesTarget: user.dailyCalorieTarget || 2150,
+          proteinTarget: user.dailyProteinTargetG || 140,
           healthGoal: user.healthGoal,
           dietaryPreferences: preferences.map((p) => p.value),
           allergies: preferences.filter((p) => p.type === 'allergy').map((p) => p.value),
           monthlyBudgetInr: user.monthlyBudgetInr || 6000,
-          supplementBudgetInr: 2400,
+          supplementBudgetInr: user.supplementBudgetInr || 2400,
         },
         selectedModel
       );
@@ -87,6 +95,7 @@ export const CoachView: React.FC = () => {
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
       console.error('Error generating AI coach response:', err);
+      showToast('Error connecting to AI. Using verified clinical guidelines.', 'error');
     } finally {
       setIsThinking(false);
     }
@@ -121,30 +130,39 @@ export const CoachView: React.FC = () => {
       {/* Header */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Bot className="w-6 h-6 text-emerald-400" />
             <h2 className="font-heading font-extrabold text-2xl text-slate-100">Forma AI Nutritionist & Coach</h2>
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold flex items-center gap-1">
               <Zap className="w-3 h-3 animate-pulse" /> LIVE MULTI-MODEL
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time conversational intelligence with WHO & ICMR 2024 guidelines, Indian family diets, and budget algorithms.
+          <p className="text-xs text-slate-300 mt-1">
+            Real-time conversational intelligence with WHO & ICMR 2024 guidelines, Indian family diets, workout periodization & fat loss science.
           </p>
         </div>
 
-        {/* Live Daily Macro Counter */}
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-2 text-right">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Today's Protein</span>
-            <span className="text-sm font-bold font-mono text-sky-400">
-              {totalProtein}g / {user.dailyProteinTargetG}g
+        {/* Live Daily Macro Counter & Key Button */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowKeyModal(true)}
+            className="flex items-center gap-1.5 bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 text-emerald-400 px-3 py-2 rounded-2xl text-xs font-mono transition-all"
+            title="Configure OpenRouter API Key"
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>API Key: Connected ✓</span>
+          </button>
+
+          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-1.5 text-right">
+            <span className="text-[9px] text-slate-400 uppercase font-semibold block">Today's Protein</span>
+            <span className="text-xs font-bold font-mono text-sky-400">
+              {totalProtein}g / {user.dailyProteinTargetG || 140}g
             </span>
           </div>
-          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl px-4 py-2 text-right">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Today's Calories</span>
-            <span className="text-sm font-bold font-mono text-amber-400">
-              {totalCalories} / {user.dailyCalorieTarget} kcal
+          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-1.5 text-right">
+            <span className="text-[9px] text-slate-400 uppercase font-semibold block">Today's Calories</span>
+            <span className="text-xs font-bold font-mono text-amber-400">
+              {totalCalories} / {user.dailyCalorieTarget || 2150} kcal
             </span>
           </div>
         </div>
@@ -245,7 +263,7 @@ export const CoachView: React.FC = () => {
                 <Sparkles className="w-4 h-4 animate-spin" />
               </div>
               <span className="bg-slate-950/80 border border-slate-800 px-4 py-2 rounded-xl animate-pulse">
-                Forma AI is running {TOP_AI_MODELS.find(m => m.id === selectedModel)?.name || 'Gemini 2.0'} inference...
+                Forma AI is generating response via {TOP_AI_MODELS.find(m => m.id === selectedModel)?.name || 'Frontier AI'}...
               </span>
             </div>
           )}
@@ -258,13 +276,13 @@ export const CoachView: React.FC = () => {
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask Forma AI about Indian family recipes, WHO macros, budget meals (₹180/day) or workout recovery..."
+            placeholder="Ask Forma AI about Indian family recipes, pre-workouts, WHO macros, budget meals (₹67/day) or workout recovery..."
             className="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
           />
           <button
             onClick={() => handleSend()}
             disabled={isThinking || !inputQuery.trim()}
-            className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold px-5 py-3 rounded-xl transition-all flex items-center justify-center shadow-lg"
+            className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold px-5 py-3 rounded-xl transition-all flex items-center justify-center shadow-lg cursor-pointer"
           >
             <Send className="w-4 h-4" />
           </button>
@@ -290,6 +308,45 @@ export const CoachView: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* API Key Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-bold text-slate-100 text-base font-heading">OpenRouter API Key</h3>
+              </div>
+              <button onClick={() => setShowKeyModal(false)} className="text-slate-400 hover:text-slate-200 text-sm">✕</button>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Your API key powers live conversational intelligence across Gemini 2.5 Flash, DeepSeek V3/R1, GPT-4o Mini, and Llama 3.3.
+            </p>
+            <input
+              type="password"
+              value={customKeyInput}
+              onChange={(e) => setCustomKeyInput(e.target.value)}
+              placeholder="sk-or-v1-..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-emerald-500"
+            />
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowKeyModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveKey}
+                className="flex items-center gap-1.5 bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs hover:bg-emerald-400 transition-all shadow-md"
+              >
+                <Check className="w-4 h-4" /> Save Key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

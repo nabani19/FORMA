@@ -64,6 +64,7 @@ interface AppContextType {
   toasts: Toast[];
   showToast: (message: string, type?: Toast['type']) => void;
   resetAllData: () => void;
+  clearTodayLogs: () => void;
   checkAllergenConflicts: (food: FoodItem) => string[];
 
   // Phase 21-30 Roadmap Extensions
@@ -745,6 +746,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return !!eatenMeals[`${day}-${mealIndex}`];
   };
 
+  const clearTodayLogs = () => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    setMealLogs((prev) => prev.filter((log) => new Date(log.loggedAt) < startOfToday));
+    setEatenMeals({});
+    try {
+      localStorage.removeItem('ai_eaten_meals');
+    } catch {}
+    showToast("Cleared today's meal logs and reset counters.", 'info');
+  };
+
   const resetAllData = () => {
     setUser(INITIAL_USER);
     setPreferences(INITIAL_PREFERENCES);
@@ -788,6 +800,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toasts,
         showToast,
         resetAllData,
+        clearTodayLogs,
         checkAllergenConflicts,
 
         // Phase 21-30 Roadmap Extensions

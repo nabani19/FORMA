@@ -18,7 +18,8 @@ import {
   Circle,
   ChefHat,
   Sparkles,
-  Info
+  Info,
+  RotateCcw
 } from 'lucide-react';
 import { BudgetSettingsPanel } from './BudgetSettingsPanel';
 import { getBudgetOptimizedWeeklyPlan, PlannedMeal } from '../data/weeklyMealPlans';
@@ -34,11 +35,19 @@ export const MealLogView: React.FC = () => {
     user,
     eatenMeals,
     togglePlannedMealEaten,
-    isPlannedMealEaten
+    isPlannedMealEaten,
+    clearTodayLogs
   } = useApp();
   const [filterMealType, setFilterMealType] = useState<MealType | 'all'>('all');
   const [searchQuery, setSearchQuery]         = useState<string>('');
-  const [selectedDay, setSelectedDay]         = useState<DayOfWeek>('friday');
+  
+  const getCurrentDayOfWeek = (): DayOfWeek => {
+    const days: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayIndex = new Date().getDay();
+    return days[dayIndex] || 'monday';
+  };
+
+  const [selectedDay, setSelectedDay]         = useState<DayOfWeek>(() => getCurrentDayOfWeek());
   const [editingLogId, setEditingLogId]       = useState<string | null>(null);
   const [editPortion, setEditPortion]         = useState<number>(100);
 
@@ -401,9 +410,22 @@ export const MealLogView: React.FC = () => {
 
       {/* ── Actual Logged Meals Section ───────────────────────────────── */}
       <div className="space-y-3" data-testid="logged-meals-section">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-          Your Scanned / Logged Meals
-        </h3>
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Your Scanned / Logged Meals ({todayLogs.length} today)
+          </h3>
+          {todayLogs.length > 0 && (
+            <button
+              onClick={() => clearTodayLogs()}
+              className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2.5 py-1 rounded-lg transition-all font-mono"
+              title="Reset and clear today's logs"
+              data-testid="btn-clear-today-logs"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Clear Today's Logs</span>
+            </button>
+          )}
+        </div>
         {filteredLogs.length === 0 ? (
           <div className="text-center py-12 bg-slate-900/60 border border-slate-800 rounded-3xl p-6" data-testid="empty-logs-banner">
             <Utensils className="w-12 h-12 text-slate-600 mx-auto mb-2" />

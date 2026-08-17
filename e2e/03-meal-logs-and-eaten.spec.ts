@@ -31,6 +31,33 @@ test.describe('CUJ-03: 7-Day Meal Schedule & Eaten Checkoffs', () => {
     await expect(authenticatedPage.locator('text=Sunday — Planned Meal Schedule')).toBeVisible();
   });
 
+  test('Recipe Popup Modal: Clicking any meal opens how-to-cook, ingredients, and nutrient charts', async ({ authenticatedPage }) => {
+    const mealLogTab = authenticatedPage.getByTestId('tab-logs');
+    if (!await mealLogTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await mealLogTab.click();
+    await expect(authenticatedPage.getByTestId('meal-log-view')).toBeVisible();
+
+    // Click on the first planned meal row
+    const mealRow = authenticatedPage.getByTestId('planned-meal-row-0');
+    await mealRow.click();
+
+    // Verify modal opened
+    const modal = authenticatedPage.getByTestId('meal-details-modal');
+    await expect(modal).toBeVisible();
+
+    // Verify recipe & cooking sections
+    await expect(authenticatedPage.locator('text=Complete Nutritional Profile')).toBeVisible();
+    await expect(authenticatedPage.locator('text=Exact Ingredients & Cost Breakdown')).toBeVisible();
+    await expect(authenticatedPage.locator('text=How to Cook (Step-by-Step Recipe)')).toBeVisible();
+
+    // Close modal
+    const closeBtn = authenticatedPage.getByTestId('btn-close-meal-modal');
+    await closeBtn.click();
+    await expect(modal).not.toBeVisible();
+  });
+
   test('Failure / Empty State: Search filter with no match displays empty feedback', async ({ authenticatedPage }) => {
     const mealLogTab = authenticatedPage.getByTestId('tab-logs');
     if (!await mealLogTab.isVisible()) {

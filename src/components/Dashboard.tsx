@@ -178,9 +178,21 @@ export const Dashboard: React.FC = () => {
                     style={{ width: `${Math.min(100, m.pct)}%` }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                  <span>Target: {m.target}{m.unit}</span>
-                  <span className="text-slate-400 font-semibold">{m.remaining}</span>
+                <div className="flex items-center justify-between gap-1 text-[11px] font-mono pt-1">
+                  <span className={`font-extrabold px-2 py-0.5 rounded-md border text-[10.5px] tracking-tight shadow-sm ${
+                    m.unit === 'kcal'
+                      ? 'text-amber-300 bg-amber-500/20 border-amber-500/40'
+                      : m.label.toLowerCase().includes('protein')
+                      ? 'text-sky-300 bg-sky-500/20 border-sky-500/40'
+                      : m.label.toLowerCase().includes('carb')
+                      ? 'text-emerald-300 bg-emerald-500/20 border-emerald-500/40'
+                      : 'text-rose-300 bg-rose-500/20 border-rose-500/40'
+                  }`}>
+                    🎯 Target: {m.target}{m.unit}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded-md border border-slate-800">
+                    {m.remaining}
+                  </span>
                 </div>
               </div>
             </div>

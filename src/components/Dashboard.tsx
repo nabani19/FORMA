@@ -289,68 +289,8 @@ export const Dashboard: React.FC = () => {
 
       </div>
 
-      {/* ── 6. User-Adjustable Budget Settings ─────────────────────── */}
+      {/* ── 4. User-Adjustable Budget Settings ─────────────────────── */}
       <BudgetSettingsPanel />
-
-      {/* ── 7. Today's Logged Meals ───────────────────────────────── */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Utensils className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-              Today's Logged Meals ({todayLogs.length})
-            </h3>
-          </div>
-          <button
-            onClick={() => setActiveTab('logs')}
-            className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1 font-mono"
-          >
-            <span>Full History</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {todayLogs.length === 0 ? (
-          <div className="text-center py-8 bg-slate-950/50 rounded-2xl border border-slate-800/80 space-y-2">
-            <Utensils className="w-8 h-8 text-slate-600 mx-auto" />
-            <p className="text-xs font-semibold text-slate-400">No meals logged yet today.</p>
-            <button
-              onClick={() => setIsScannerOpen(true)}
-              className="mt-1 text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1 font-mono"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Log Your First Meal</span>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {todayLogs.map((log) => (
-              <div
-                key={log.logId}
-                className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 flex items-center justify-between gap-3 transition-all"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={log.imageUrl}
-                    alt={log.foodName}
-                    className="w-11 h-11 rounded-xl object-cover shrink-0 border border-slate-800"
-                  />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-200 truncate font-heading">{log.foodName}</div>
-                    <div className="text-[11px] text-slate-400 font-medium mt-0.5 font-mono">
-                      {Math.round(log.portionSizeGrams)}g · {Math.round(log.calculatedNutrients?.calories || 0)} kcal
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right shrink-0 font-mono">
-                  <div className="text-[11px] font-bold text-sky-400">P: {Math.round(log.calculatedNutrients?.protein_g || 0)}g</div>
-                  <div className="text-[10px] text-amber-400">C: {Math.round(log.calculatedNutrients?.carbs_g || 0)}g</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
     </div>
   );

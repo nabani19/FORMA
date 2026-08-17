@@ -303,10 +303,10 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Secondary Sub-Navbar: Clean Primary Tabs + Others Dropdown ── */}
+        {/* ── Secondary Sub-Navbar: Dashboard + Others Dropdown ── */}
         <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Primary Direct Tabs */}
+            {/* Direct Dashboard Tab */}
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
@@ -319,102 +319,75 @@ export const Navbar: React.FC = () => {
               <span>Dashboard</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('logs')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                activeTab === 'logs'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
-                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-              data-testid="tab-logs"
-            >
-              <Utensils className="w-3.5 h-3.5" />
-              <span>Meal Log</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('workout')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                activeTab === 'workout'
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm'
-                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-              data-testid="tab-workout"
-            >
-              <Dumbbell className="w-3.5 h-3.5" />
-              <span>Workout</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('aesthetic')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                activeTab === 'aesthetic'
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-              data-testid="tab-aesthetic"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Aesthetic V-Taper</span>
-            </button>
-
-            {/* 'Others' Dropdown for Extended Tools */}
-            <div className="relative group" ref={dropdownRef}>
+            {/* 'Others' Dropdown for All Modules & Tools */}
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                  ['coach', 'medical', 'supplements', 'grocery', 'trainer', 'analytics'].includes(activeTab)
+                  activeTab !== 'dashboard' && activeTab !== 'profile'
                     ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 shadow-sm ring-1 ring-purple-500/30'
                     : 'bg-slate-950/40 text-slate-300 border-slate-800 hover:bg-slate-800/80 hover:text-white'
                 }`}
                 data-testid="btn-more-tools-dropdown"
               >
                 <span>
-                  {['coach', 'medical', 'supplements', 'grocery', 'trainer', 'analytics'].includes(activeTab)
-                    ? `Others: ${activeTab === 'coach' ? 'AI Coach' : activeTab === 'medical' ? 'Medical' : activeTab === 'supplements' ? 'Supplements' : activeTab === 'grocery' ? 'Grocery' : activeTab === 'trainer' ? 'Trainer' : 'Analytics'}`
-                    : 'Others'}
+                  {activeTab === 'logs' ? 'Others: Meal Log' :
+                   activeTab === 'workout' ? 'Others: Workout' :
+                   activeTab === 'aesthetic' ? 'Others: Aesthetic' :
+                   activeTab === 'coach' ? 'Others: AI Coach' :
+                   activeTab === 'medical' ? 'Others: Medical' :
+                   activeTab === 'supplements' ? 'Others: Supplements' :
+                   activeTab === 'grocery' ? 'Others: Grocery' :
+                   activeTab === 'trainer' ? 'Others: Trainer' :
+                   activeTab === 'analytics' ? 'Others: Analytics' :
+                   'Others'}
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreDropdownOpen ? 'rotate-180 text-purple-400' : 'text-slate-400 group-hover:rotate-180'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreDropdownOpen ? 'rotate-180 text-purple-400' : 'text-slate-400'}`} />
               </button>
 
-              <div className={`absolute left-0 sm:left-auto sm:right-0 mt-2 w-64 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-fade-in backdrop-blur-2xl space-y-1 ${isMoreDropdownOpen ? 'block' : 'hidden group-hover:block'}`}>
-                <div className="text-[10px] font-bold uppercase font-mono text-slate-400 px-2.5 py-1 border-b border-slate-800/80 mb-1 flex items-center justify-between">
-                  <span>Clinical & AI Modules</span>
-                  <span className="text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">6 Tools</span>
-                </div>
+              {isMoreDropdownOpen && (
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-64 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-fade-in backdrop-blur-2xl space-y-1">
+                  <div className="text-[10px] font-bold uppercase font-mono text-slate-400 px-2.5 py-1 border-b border-slate-800/80 mb-1 flex items-center justify-between">
+                    <span>Modules & Tools</span>
+                    <span className="text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">9 Tools</span>
+                  </div>
 
-                {[
-                  { id: 'coach' as const, label: 'AI Nutrition Coach', sub: 'Clinical conversational advice', icon: Bot, color: 'text-indigo-400' },
-                  { id: 'medical' as const, label: 'Medical Lab Analyzer', sub: 'Blood test report risk audit', icon: Activity, color: 'text-rose-400' },
-                  { id: 'supplements' as const, label: 'Supplement Advisor', sub: 'Stack selection & buy links', icon: Pill, color: 'text-purple-400' },
-                  { id: 'grocery' as const, label: 'Grocery AI Planner', sub: '2026 Indian market prices', icon: ShoppingBag, color: 'text-teal-400' },
-                  { id: 'trainer' as const, label: 'Trainer & Coach View', sub: 'Client roster & compliance', icon: Users, color: 'text-indigo-300' },
-                  { id: 'analytics' as const, label: 'Analytics & Trends', sub: 'Macro adherence charts', icon: BarChart3, color: 'text-cyan-400' },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const active = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleSelectTab(item.id)}
-                      className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-all ${
-                        active
-                          ? 'bg-purple-500/20 text-purple-200 border border-purple-500/30 font-bold shadow-sm'
-                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                      }`}
-                      data-testid={`tab-${item.id}`}
-                    >
-                      <div className={`p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 ${item.color}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-bold truncate">{item.label}</div>
-                        <div className="text-[10px] text-slate-400 truncate">{item.sub}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                  {[
+                    { id: 'logs' as const, label: 'Meal Log & Planner', sub: '5-Meals daily history & budget', icon: Utensils, color: 'text-emerald-400' },
+                    { id: 'workout' as const, label: 'Workout Generator', sub: '1,322+ exercises & 1RM engine', icon: Dumbbell, color: 'text-sky-400' },
+                    { id: 'aesthetic' as const, label: 'Aesthetic V-Taper', sub: 'Adonis ratio & V-Taper splits', icon: Sparkles, color: 'text-amber-400' },
+                    { id: 'coach' as const, label: 'AI Nutrition Coach', sub: 'Clinical conversational advice', icon: Bot, color: 'text-indigo-400' },
+                    { id: 'medical' as const, label: 'Medical Lab Analyzer', sub: 'Blood test report risk audit', icon: Activity, color: 'text-rose-400' },
+                    { id: 'supplements' as const, label: 'Supplement Advisor', sub: 'Stack selection & buy links', icon: Pill, color: 'text-purple-400' },
+                    { id: 'grocery' as const, label: 'Grocery AI Planner', sub: '2026 Indian market prices', icon: ShoppingBag, color: 'text-teal-400' },
+                    { id: 'trainer' as const, label: 'Trainer & Coach View', sub: 'Client roster & compliance', icon: Users, color: 'text-indigo-300' },
+                    { id: 'analytics' as const, label: 'Analytics & Trends', sub: 'Macro adherence charts', icon: BarChart3, color: 'text-cyan-400' },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const active = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleSelectTab(item.id)}
+                        className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-all ${
+                          active
+                            ? 'bg-purple-500/20 text-purple-200 border border-purple-500/30 font-bold shadow-sm'
+                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                        }`}
+                        data-testid={`tab-${item.id}`}
+                      >
+                        <div className={`p-1.5 rounded-lg bg-slate-950/80 border border-slate-800 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold truncate">{item.label}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{item.sub}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>

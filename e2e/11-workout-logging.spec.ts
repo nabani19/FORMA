@@ -3,7 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 test.describe('CUJ-14: Workout Periodization, Exercise Search & 1RM Logger', () => {
   test('Happy Path: Switches workout sub-tabs, searches anatomy library, and opens exercise details', async ({ authenticatedPage }) => {
     // 1. Navigate to Workout View
-    await authenticatedPage.getByTestId('tab-workout').click();
+    const workoutTab = authenticatedPage.getByTestId('tab-workout');
+    if (!await workoutTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await workoutTab.click();
     await expect(authenticatedPage.getByTestId('workout-plan-view')).toBeVisible();
 
     // 2. Switch to 1,000+ Exercise Anatomy tab
@@ -27,7 +31,11 @@ test.describe('CUJ-14: Workout Periodization, Exercise Search & 1RM Logger', () 
   });
 
   test('RPE & 1RM Logger: Updates set parameters and computes 1RM estimate', async ({ authenticatedPage }) => {
-    await authenticatedPage.getByTestId('tab-workout').click();
+    const workoutTab = authenticatedPage.getByTestId('tab-workout');
+    if (!await workoutTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await workoutTab.click();
 
     // Switch to Logger
     await authenticatedPage.getByTestId('tab-workout-logger').click();

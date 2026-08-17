@@ -3,7 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 test.describe('CUJ-19: Meal Portion Edit & Macro Recalculation', () => {
   test('Happy Path: Edits portion size of logged meal and saves recalculation', async ({ authenticatedPage }) => {
     // 1. Navigate to Meal Log view
-    await authenticatedPage.getByTestId('tab-logs').click();
+    const mealLogTab = authenticatedPage.getByTestId('tab-logs');
+    if (!await mealLogTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await mealLogTab.click();
     await expect(authenticatedPage.getByTestId('meal-log-view')).toBeVisible();
 
     // 2. Locate first meal card's edit button
@@ -28,7 +32,11 @@ test.describe('CUJ-19: Meal Portion Edit & Macro Recalculation', () => {
   });
 
   test('Cancel State: Canceling edit leaves original portion intact', async ({ authenticatedPage }) => {
-    await authenticatedPage.getByTestId('tab-logs').click();
+    const mealLogTab = authenticatedPage.getByTestId('tab-logs');
+    if (!await mealLogTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await mealLogTab.click();
 
     const editBtn = authenticatedPage.locator('[data-testid^="btn-edit-log-"]').first();
     await editBtn.click();

@@ -3,7 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 test.describe('CUJ-12: Aesthetic V-Taper Blueprint & Adonis Golden Ratio', () => {
   test('Happy Path: Enters measurements, calculates ratio, and saves to history log', async ({ authenticatedPage }) => {
     // 1. Navigate to Aesthetic V-Taper view
-    await authenticatedPage.getByTestId('tab-aesthetic').click();
+    const aestheticTab = authenticatedPage.getByTestId('tab-aesthetic');
+    if (!await aestheticTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await aestheticTab.click();
     await expect(authenticatedPage.getByTestId('aesthetic-physique-view')).toBeVisible();
 
     // 2. Input measurements (Shoulders: 48, Waist: 30) -> 48 / 30 = 1.600
@@ -35,7 +39,11 @@ test.describe('CUJ-12: Aesthetic V-Taper Blueprint & Adonis Golden Ratio', () =>
   });
 
   test('Unit Toggle: Switches between Inches (in) and Centimeters (cm)', async ({ authenticatedPage }) => {
-    await authenticatedPage.getByTestId('tab-aesthetic').click();
+    const aestheticTab = authenticatedPage.getByTestId('tab-aesthetic');
+    if (!await aestheticTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await aestheticTab.click();
 
     const unitCmBtn = authenticatedPage.getByTestId('btn-unit-cm');
     await unitCmBtn.click();
@@ -47,7 +55,11 @@ test.describe('CUJ-12: Aesthetic V-Taper Blueprint & Adonis Golden Ratio', () =>
   });
 
   test('Aesthetic Overload Engine: Computes auto-regulated micro-progression', async ({ authenticatedPage }) => {
-    await authenticatedPage.getByTestId('tab-aesthetic').click();
+    const aestheticTab = authenticatedPage.getByTestId('tab-aesthetic');
+    if (!await aestheticTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await aestheticTab.click();
 
     const weightInput = authenticatedPage.getByTestId('overload-current-weight');
     const repsInput = authenticatedPage.getByTestId('input-overload-reps');

@@ -4,6 +4,9 @@ test.describe('CUJ-03: 7-Day Meal Schedule & Eaten Checkoffs', () => {
   test('Happy Path: Toggles meal completion (Eaten checkmark) and switches day tabs', async ({ authenticatedPage }) => {
     // 1. Navigate to Meal Logs tab via top navigation bar
     const mealLogTab = authenticatedPage.getByTestId('tab-logs');
+    if (!await mealLogTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
     await mealLogTab.click();
     await expect(authenticatedPage.getByTestId('meal-log-view')).toBeVisible();
 
@@ -30,6 +33,9 @@ test.describe('CUJ-03: 7-Day Meal Schedule & Eaten Checkoffs', () => {
 
   test('Failure / Empty State: Search filter with no match displays empty feedback', async ({ authenticatedPage }) => {
     const mealLogTab = authenticatedPage.getByTestId('tab-logs');
+    if (!await mealLogTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
     await mealLogTab.click();
     await expect(authenticatedPage.getByTestId('meal-log-view')).toBeVisible();
 

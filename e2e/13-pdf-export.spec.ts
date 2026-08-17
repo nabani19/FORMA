@@ -3,7 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 test.describe('CUJ-20: 1-Click Clinical PDF & Formatted Report Generator', () => {
   test('Happy Path: Opens PDF export modal, switches report categories, and verifies previews', async ({ authenticatedPage }) => {
     // 1. Navigate to Aesthetic View where export button is present
-    await authenticatedPage.getByTestId('tab-aesthetic').click();
+    const aestheticTab = authenticatedPage.getByTestId('tab-aesthetic');
+    if (!await aestheticTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await aestheticTab.click();
     await expect(authenticatedPage.getByTestId('aesthetic-physique-view')).toBeVisible();
 
     // 2. Click Export Report button

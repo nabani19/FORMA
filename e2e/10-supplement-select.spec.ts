@@ -3,7 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 test.describe('CUJ-13: Supplement Stack Personal Selection & Budget Recalculation', () => {
   test('Happy Path: Toggles supplement selection and recalculates active stack total', async ({ authenticatedPage }) => {
     // 1. Navigate to Supplements View
-    await authenticatedPage.getByTestId('tab-supplements').click();
+    const suppTab = authenticatedPage.getByTestId('tab-supplements');
+    if (!await suppTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await suppTab.click();
     await expect(authenticatedPage.getByTestId('supplement-view')).toBeVisible();
 
     // 2. Verify total monthly expenditure and selected count are displayed
@@ -30,7 +34,11 @@ test.describe('CUJ-13: Supplement Stack Personal Selection & Budget Recalculatio
   });
 
   test('Toggle Single Supplement: Adds and removes item from stack', async ({ authenticatedPage }) => {
-    await authenticatedPage.getByTestId('tab-supplements').click();
+    const suppTab = authenticatedPage.getByTestId('tab-supplements');
+    if (!await suppTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await suppTab.click();
 
     // Toggle Vitamin D3
     const toggleBtn = authenticatedPage.getByTestId('btn-toggle-supplement-supp_3');

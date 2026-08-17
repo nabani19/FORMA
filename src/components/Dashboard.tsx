@@ -198,37 +198,7 @@ export const Dashboard: React.FC = () => {
         })}
       </div>
 
-      {/* ── 3.5. Aesthetic V-Taper & Adonis Golden Ratio Banner ──── */}
-      <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-indigo-950/40 border border-amber-500/40 rounded-3xl p-5 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3.5">
-          <div className="p-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm font-extrabold text-slate-100 font-heading">
-                Aesthetic Physique Blueprint (Adonis Index Φ = 1.618)
-              </h3>
-              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-md font-mono font-bold">
-                Biomechanics V-Taper
-              </span>
-            </div>
-            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-              Calculate your shoulder-to-waist ratio, explore the 6-tier muscle hierarchy (Side Delts, Lats, Upper Chest), and generate periodized aesthetic workout splits.
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setActiveTab('aesthetic')}
-          className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 shrink-0 self-stretch sm:self-auto justify-center"
-        >
-          <span>Open V-Taper Blueprint</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* ── 4. Food Budget & Health Snapshot ──────────────────────── */}
+      {/* ── 3. Food Budget & Health Snapshot ──────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Daily Food Budget Card */}
@@ -321,29 +291,6 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
 
-      </div>
-
-      {/* ── 5. Quick Tools Shortcuts ──────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: '5-Meal Planner', sub: 'Daily logs & macros', tab: 'logs' as const, icon: Utensils, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-          { label: 'AI Nutritionist', sub: 'Clinical advice chat', tab: 'coach' as const, icon: Bot, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
-          { label: 'Workout AI', sub: '1,322+ exercises', tab: 'workout' as const, icon: Dumbbell, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' },
-          { label: 'Trainer Portal', sub: 'Client Compliance', tab: 'trainer' as const, icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-        ].map((q) => {
-          const Icon = q.icon;
-          return (
-            <button
-              key={q.tab}
-              onClick={() => setActiveTab(q.tab)}
-              className={`bg-slate-900/90 border ${q.bg} rounded-2xl p-4 text-left hover:scale-[1.02] active:scale-98 transition-all space-y-1.5 shadow-md`}
-            >
-              <Icon className={`w-5 h-5 ${q.color}`} />
-              <div className="text-xs sm:text-sm font-bold text-slate-100 font-heading">{q.label}</div>
-              <div className="text-[10px] text-slate-400 font-mono">{q.sub}</div>
-            </button>
-          );
-        })}
       </div>
 
       {/* ── 6. User-Adjustable Budget Settings ─────────────────────── */}

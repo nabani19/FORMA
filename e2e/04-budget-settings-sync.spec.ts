@@ -21,7 +21,11 @@ test.describe('CUJ-04 & CUJ-05: Multi-Category Budget Controls & Supplement Stac
     await expect(authenticatedPage.getByTestId('budget-summary-header')).toContainText('8000');
 
     // 4. Navigate to Supplement view and verify synced supplement budget
-    await authenticatedPage.getByTestId('tab-supplements').click();
+    const suppTab = authenticatedPage.getByTestId('tab-supplements');
+    if (!await suppTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await suppTab.click();
     await expect(authenticatedPage.locator('text=AI Supplement Stack Advisor')).toBeVisible();
   });
 

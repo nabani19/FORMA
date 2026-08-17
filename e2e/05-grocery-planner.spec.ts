@@ -3,7 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 test.describe('CUJ-06: AI Grocery Shopping List Operations', () => {
   test('Happy Path: Adds custom grocery item and toggles purchased checklist', async ({ authenticatedPage }) => {
     // 1. Navigate to Grocery tab
-    await authenticatedPage.getByTestId('tab-grocery').click();
+    const groceryTab = authenticatedPage.getByTestId('tab-grocery');
+    if (!await groceryTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await groceryTab.click();
     await expect(authenticatedPage.locator('text=AI Grocery List & Budget Planner')).toBeVisible();
 
     // 2. Add a new item to the shopping list
@@ -22,7 +26,11 @@ test.describe('CUJ-06: AI Grocery Shopping List Operations', () => {
   });
 
   test('Boundary State: Empty item input submission is rejected', async ({ authenticatedPage }) => {
-    await authenticatedPage.getByTestId('tab-grocery').click();
+    const groceryTab = authenticatedPage.getByTestId('tab-grocery');
+    if (!await groceryTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await groceryTab.click();
     const nameInput = authenticatedPage.locator('input[placeholder*="Add item"]');
     await nameInput.fill('');
 

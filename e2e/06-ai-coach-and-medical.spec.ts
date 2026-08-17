@@ -4,6 +4,9 @@ test.describe('CUJ-07 & CUJ-08: AI Coach & Medical Report Analyzer', () => {
   test('Happy Path: AI Coach loads model selectors and quick templates', async ({ authenticatedPage }) => {
     // 1. Navigate to AI Coach via top navigation bar
     const coachTab = authenticatedPage.getByTestId('tab-coach');
+    if (!await coachTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
     await coachTab.click();
     await expect(authenticatedPage.locator('text=Forma AI Nutritionist & Coach')).toBeVisible();
 
@@ -13,7 +16,11 @@ test.describe('CUJ-07 & CUJ-08: AI Coach & Medical Report Analyzer', () => {
 
   test('Happy Path: Medical Report Analyzer calculates risk and alerts', async ({ authenticatedPage }) => {
     // 1. Navigate to Medical tab
-    await authenticatedPage.getByTestId('tab-medical').click();
+    const medicalTab = authenticatedPage.getByTestId('tab-medical');
+    if (!await medicalTab.isVisible()) {
+      await authenticatedPage.getByTestId('btn-more-tools-dropdown').click();
+    }
+    await medicalTab.click();
     await expect(authenticatedPage.locator('text=AI Medical Report Analyzer')).toBeVisible();
 
     // 2. Click Analyze Report button

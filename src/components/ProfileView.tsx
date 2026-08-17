@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { User, ActivityLevel, HealthGoal, Gender } from '../types';
-import { User as UserIcon, Settings, ShieldAlert, Save, Plus, Trash2, ShieldCheck, Server, Activity, Target, Cpu, Globe, RefreshCw, Sun, Moon } from 'lucide-react';
+import { User as UserIcon, ShieldAlert, Save, Plus, ShieldCheck, Server, Cpu, Globe, RefreshCw, Sun, Moon, Target } from 'lucide-react';
 import { runOwaspSecurityAudit, getSecurityHeaders } from '../utils/securityEngine';
 import { getProductionClusterTelemetry } from '../utils/k8sHealth';
 import { GamificationWidget } from './GamificationWidget';

@@ -5,16 +5,11 @@ import {
   Flame, 
   Plus, 
   ArrowRight, 
-  Bot, 
   Dumbbell, 
-  Utensils, 
-  TrendingUp, 
   ShieldCheck, 
   Sparkles,
   Wallet,
-  FileText,
-  Users,
-  Server
+  FileText
 } from 'lucide-react';
 import { BudgetSettingsPanel } from './BudgetSettingsPanel';
 import { getStartOfToday, deriveDailyBudget, formatINR } from '../utils/nutritionUtils';
@@ -27,7 +22,6 @@ export const Dashboard: React.FC = () => {
     setActiveTab, 
     setIsScannerOpen, 
     setIsPdfExportModalOpen, 
-    setIsHealthModalOpen,
     t 
   } = useApp();
 

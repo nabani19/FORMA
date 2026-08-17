@@ -98,6 +98,7 @@ export const ProfileView: React.FC = () => {
               <input
                 type="text"
                 value={firstName}
+                maxLength={50}
                 onChange={(e) => setFirstName(e.target.value)}
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
               />
@@ -107,6 +108,7 @@ export const ProfileView: React.FC = () => {
               <input
                 type="text"
                 value={lastName}
+                maxLength={50}
                 onChange={(e) => setLastName(e.target.value)}
                 className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
               />

@@ -262,16 +262,19 @@ export const SaaSModals: React.FC = () => {
                 <textarea
                   required
                   rows={4}
+                  maxLength={2000}
                   value={supportMessage}
                   onChange={(e) => setSupportMessage(e.target.value)}
                   placeholder="Describe your issue or suggestion..."
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+                  data-testid="input-support-message"
                 />
               </div>
 
               <button
                 type="submit"
                 className="w-full py-2.5 rounded-xl font-extrabold text-xs bg-emerald-500 hover:bg-emerald-600 text-slate-950 transition-colors"
+                data-testid="btn-submit-support"
               >
                 Submit Ticket
               </button>

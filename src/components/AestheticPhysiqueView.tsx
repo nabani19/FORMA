@@ -408,6 +408,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               className={`px-3 py-1 rounded-lg text-xs font-bold font-mono transition-all ${
                 unit === 'in' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
+              data-testid="btn-unit-in"
             >
               Inches (in)
             </button>
@@ -416,6 +417,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               className={`px-3 py-1 rounded-lg text-xs font-bold font-mono transition-all ${
                 unit === 'cm' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
               }`}
+              data-testid="btn-unit-cm"
             >
               Centimeters (cm)
             </button>
@@ -436,6 +438,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               onChange={(e) => setShouldersInput(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 focus:border-amber-500 rounded-xl px-3 py-2 text-slate-100 text-base font-extrabold focus:outline-none"
               placeholder="e.g. 48.0"
+              data-testid="input-shoulders"
             />
             <span className="text-[10px] text-slate-400 block">Deltoid lateral circumference</span>
           </div>
@@ -452,6 +455,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               onChange={(e) => setWaistInput(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 focus:border-rose-500 rounded-xl px-3 py-2 text-slate-100 text-base font-extrabold focus:outline-none"
               placeholder="e.g. 31.0"
+              data-testid="input-waist"
             />
             <span className="text-[10px] text-slate-400 block">Narrowest waist circumference</span>
           </div>
@@ -468,6 +472,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               onChange={(e) => setChestInput(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-slate-100 text-base font-extrabold focus:outline-none"
               placeholder="e.g. 41.0"
+              data-testid="input-chest"
             />
             <span className="text-[10px] text-slate-400 block">Across mid-nipple line</span>
           </div>
@@ -484,6 +489,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               onChange={(e) => setArmsInput(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 rounded-xl px-3 py-2 text-slate-100 text-base font-extrabold focus:outline-none"
               placeholder="e.g. 15.5"
+              data-testid="input-arms"
             />
             <span className="text-[10px] text-slate-400 block">Flexed peak bicep/tricep</span>
           </div>
@@ -497,11 +503,11 @@ export const AestheticPhysiqueView: React.FC = () => {
                 Calculated Adonis Shoulder-to-Waist Ratio
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl sm:text-5xl font-black font-mono text-amber-400 tracking-tight">
+                <span className="text-4xl sm:text-5xl font-black font-mono text-amber-400 tracking-tight" data-testid="ratio-result">
                   {currentRatio > 0 ? currentRatio.toFixed(3) : '—'}
                 </span>
                 <div className="space-y-0.5">
-                  <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${statusInfo.bg} ${statusInfo.color} font-mono block`}>
+                  <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full border ${statusInfo.bg} ${statusInfo.color} font-mono block`} data-testid="ratio-badge">
                     {statusInfo.badge}
                   </span>
                   <span className="text-[11px] text-slate-400 font-mono">
@@ -515,6 +521,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               <button
                 onClick={handleSaveMeasurement}
                 className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all font-mono"
+                data-testid="btn-save-measurement"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Save to History Log</span>
@@ -710,6 +717,7 @@ export const AestheticPhysiqueView: React.FC = () => {
                     ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
+                data-testid={`btn-level-${lvl}`}
               >
                 {lvl} ({lvl === 'beginner' ? '3-Day' : lvl === 'intermediate' ? '4-Day' : '5-Day'})
               </button>
@@ -718,7 +726,7 @@ export const AestheticPhysiqueView: React.FC = () => {
         </div>
 
         {/* Tabulate-Style Rendered Sessions */}
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="workout-split-table">
           {WORKOUT_SPLITS[experienceLevel].map((session, sIdx) => (
             <div key={sIdx} className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4.5 space-y-3 shadow-inner">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
@@ -795,6 +803,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               value={calcExercise}
               onChange={(e) => setCalcExercise(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
+              data-testid="select-overload-exercise"
             >
               <option value="Cable Lateral Raises">Cable Lateral Raises</option>
               <option value="Wide-Grip Lat Pulldowns">Wide-Grip Lat Pulldowns</option>
@@ -813,6 +822,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               value={currentWeightKg}
               onChange={(e) => setCurrentWeightKg(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 font-bold focus:outline-none focus:border-indigo-500"
+              data-testid="overload-current-weight"
             />
           </div>
 
@@ -823,6 +833,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               value={repsDone}
               onChange={(e) => setRepsDone(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 font-bold focus:outline-none focus:border-indigo-500"
+              data-testid="input-overload-reps"
             />
           </div>
 
@@ -832,6 +843,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               value={rpeLogged}
               onChange={(e) => setRpeLogged(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 font-bold focus:outline-none focus:border-indigo-500"
+              data-testid="select-overload-rpe"
             >
               <option value="6.0">RPE 6 (4 reps in tank)</option>
               <option value="7.0">RPE 7 (3 reps in tank)</option>
@@ -850,12 +862,12 @@ export const AestheticPhysiqueView: React.FC = () => {
             <span className="text-slate-400 block">Prescription for Next Session:</span>
             <div className="text-sm font-bold text-slate-100 mt-0.5">
               {isOverloadTriggered ? (
-                <span className="text-emerald-400 font-mono font-extrabold flex items-center gap-1.5">
+                <span className="text-emerald-400 font-mono font-extrabold flex items-center gap-1.5" data-testid="overload-next-weight">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   Target Met! Increase load by +{recommendedIncreaseKg} kg &rarr; Prescribed Target: {nextTargetWeightKg} kg
                 </span>
               ) : (
-                <span className="text-amber-400 font-mono font-bold flex items-center gap-1.5">
+                <span className="text-amber-400 font-mono font-bold flex items-center gap-1.5" data-testid="overload-next-weight">
                   <Info className="w-4 h-4 text-amber-400" />
                   Maintain current {weightNum} kg load until top rep target is met with RPE &le; 8.0.
                 </span>
@@ -870,7 +882,7 @@ export const AestheticPhysiqueView: React.FC = () => {
       </div>
 
       {/* ── 7. Historical Measurements & Trend Log ─────────────────── */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 backdrop-blur-xl">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4 backdrop-blur-xl" data-testid="history-table">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" />
@@ -902,7 +914,7 @@ export const AestheticPhysiqueView: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-800/80">
                 {aestheticHistory.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-950/60 transition-colors">
+                  <tr key={item.id} className="hover:bg-slate-950/60 transition-colors" data-testid={`history-row-${item.id}`}>
                     <td className="py-2.5 px-2 text-slate-400 font-mono">
                       {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
@@ -921,6 +933,7 @@ export const AestheticPhysiqueView: React.FC = () => {
                         onClick={() => deleteAestheticMeasurement(item.id)}
                         className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
                         title="Delete log entry"
+                        data-testid={`btn-delete-measurement-${item.id}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

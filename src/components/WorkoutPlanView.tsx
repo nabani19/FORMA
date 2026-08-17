@@ -145,7 +145,7 @@ export const WorkoutPlanView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 pb-24 max-w-5xl mx-auto px-4 pt-4 animate-fade-in" data-testid="workout-view">
+    <div className="space-y-6 pb-24 max-w-5xl mx-auto px-4 pt-4 animate-fade-in" data-testid="workout-plan-view">
       
       {/* ── 1. Top Header & Periodization Split Title ──────────────── */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -171,6 +171,7 @@ export const WorkoutPlanView: React.FC = () => {
             className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'routine' ? 'bg-sky-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
+            data-testid="tab-workout-routine"
           >
             Active Routine Split
           </button>
@@ -179,6 +180,7 @@ export const WorkoutPlanView: React.FC = () => {
             className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'logger' ? 'bg-sky-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
+            data-testid="tab-workout-logger"
           >
             RPE & 1RM Logger
           </button>
@@ -187,12 +189,14 @@ export const WorkoutPlanView: React.FC = () => {
             className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'anatomy_library' ? 'bg-sky-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
+            data-testid="tab-workout-anatomy"
           >
             1,000+ Exercise Anatomy
           </button>
           <button
             onClick={() => setGlobalActiveTab('aesthetic')}
             className="px-3 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm"
+            data-testid="btn-nav-aesthetic-vtaper"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Aesthetic V-Taper</span>
@@ -278,6 +282,7 @@ export const WorkoutPlanView: React.FC = () => {
               <div
                 key={ex.id}
                 className="bg-slate-900/80 border border-slate-800 hover:border-sky-500/40 rounded-3xl p-5 shadow-xl transition-all space-y-4"
+                data-testid={`exercise-card-${ex.id}`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -323,6 +328,7 @@ export const WorkoutPlanView: React.FC = () => {
                         setActiveTab('logger');
                       }}
                       className="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-sky-500/20 transition-all"
+                      data-testid={`btn-log-exercise-${ex.id}`}
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Log Sets</span>
@@ -338,6 +344,7 @@ export const WorkoutPlanView: React.FC = () => {
                   <button
                     onClick={() => setSelectedExerciseForModal(ex)}
                     className="text-sky-400 hover:underline font-bold text-[11px] shrink-0 ml-2"
+                    data-testid={`btn-view-inspector-${ex.id}`}
                   >
                     View HD Inspector →
                   </button>
@@ -417,6 +424,7 @@ export const WorkoutPlanView: React.FC = () => {
                       ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-100'
                       : 'bg-slate-950/70 border-slate-800 text-slate-300'
                   }`}
+                  data-testid={`set-row-${s.setId}`}
                 >
                   <div className="col-span-2 font-bold font-mono text-xs flex items-center gap-1.5">
                     <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-200 flex items-center justify-center text-[11px]">
@@ -430,6 +438,7 @@ export const WorkoutPlanView: React.FC = () => {
                       value={s.weightKg}
                       onChange={(e) => handleUpdateSet(s.setId, 'weightKg', parseFloat(e.target.value) || 0)}
                       className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 font-mono font-bold focus:outline-none focus:border-sky-500"
+                      data-testid={`input-set-weight-${s.setId}`}
                     />
                   </div>
 
@@ -439,6 +448,7 @@ export const WorkoutPlanView: React.FC = () => {
                       value={s.reps}
                       onChange={(e) => handleUpdateSet(s.setId, 'reps', parseInt(e.target.value) || 0)}
                       className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 font-mono font-bold focus:outline-none focus:border-sky-500"
+                      data-testid={`input-set-reps-${s.setId}`}
                     />
                   </div>
 
@@ -447,6 +457,7 @@ export const WorkoutPlanView: React.FC = () => {
                       value={s.rpe}
                       onChange={(e) => handleUpdateSet(s.setId, 'rpe', parseFloat(e.target.value))}
                       className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-amber-400 font-mono font-bold focus:outline-none focus:border-sky-500"
+                      data-testid={`select-set-rpe-${s.setId}`}
                     >
                       <option value="6.0">RPE 6 (4 RIR)</option>
                       <option value="6.5">RPE 6.5 (3-4 RIR)</option>
@@ -460,7 +471,7 @@ export const WorkoutPlanView: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="col-span-2 text-right font-mono text-xs font-bold text-sky-400">
+                  <div className="col-span-2 text-right font-mono text-xs font-bold text-sky-400" data-testid={`est-1rm-${s.setId}`}>
                     {s.oneRmEst} kg
                   </div>
 
@@ -472,6 +483,7 @@ export const WorkoutPlanView: React.FC = () => {
                           ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                           : 'bg-slate-800 text-slate-500 hover:text-slate-300'
                       }`}
+                      data-testid={`btn-toggle-set-${s.setId}`}
                     >
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
@@ -484,6 +496,7 @@ export const WorkoutPlanView: React.FC = () => {
               <button
                 onClick={handleAddSet}
                 className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                data-testid="btn-add-set"
               >
                 <Plus className="w-4 h-4 text-sky-400" />
                 <span>Add Set #{exerciseSets.length + 1}</span>
@@ -550,6 +563,7 @@ export const WorkoutPlanView: React.FC = () => {
                 onChange={(e) => setSearchExercise(e.target.value)}
                 placeholder="Search across 1,000+ exercises, biomechanics or muscle targets..."
                 className="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                data-testid="input-search-exercise"
               />
             </div>
 
@@ -575,6 +589,7 @@ export const WorkoutPlanView: React.FC = () => {
                 key={ex.id}
                 onClick={() => setSelectedExerciseForModal(ex)}
                 className="bg-slate-900/80 border border-slate-800 hover:border-sky-500/40 rounded-2xl p-4 shadow-xl space-y-3 cursor-pointer transition-all hover:scale-[1.01]"
+                data-testid={`anatomy-exercise-card-${ex.id}`}
               >
                 <div className="flex items-start gap-3">
                   <img

@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, DietaryPreference, MealLog, FoodItem, MealType, NutritionalInfo } from '../types';
 import { INITIAL_USER, INITIAL_PREFERENCES, INITIAL_MEAL_LOGS, INITIAL_FOOD_DATABASE } from '../data/mockFoodDatabase';
-
 import { LanguageCode, getTranslation } from '../utils/i18n';
+import { stripHtml } from '../utils/securityEngine';
+
+const isDev = Boolean((import.meta as any).env?.DEV);
 
 interface Toast {
   id: string;
@@ -385,7 +387,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isDarkMode]);
 
   const trackEvent = (eventName: string, data?: Record<string, any>) => {
-    console.log(`[Analytics Event] ${eventName}`, data || {});
+    if (isDev) {
+      console.log(`[Analytics Event] ${eventName}`, data || {});
+    }
   };
 
   const showToast = (message: string, type: Toast['type'] = 'info') => {
@@ -402,7 +406,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         localStorage.setItem('ai_nutrition_theme', next ? 'dark' : 'light');
       } catch (e) {
-        console.error('Failed to save theme to localStorage:', e);
+        if (isDev) console.error('Failed to save theme to localStorage:', e);
       }
       if (next) {
         document.documentElement.classList.add('dark');
@@ -424,7 +428,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       localStorage.setItem('ai_tracker_plan', plan);
     } catch (e) {
-      console.error('Failed to save plan:', e);
+      if (isDev) console.error('Failed to save plan:', e);
     }
     trackEvent('subscription_plan_changed', { plan });
     showToast(`Switched subscription plan to ${plan.toUpperCase()}!`, 'success');
@@ -437,7 +441,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         localStorage.setItem('ai_tracker_logged_in', String(next));
       } catch (e) {
-        console.error('Failed to save login state:', e);
+        if (isDev) console.error('Failed to save login state:', e);
       }
       showToast(next ? 'Signed in successfully.' : 'Signed out of account.', next ? 'success' : 'info');
       return next;
@@ -450,7 +454,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       localStorage.setItem('ai_tracker_cookies_accepted', 'true');
     } catch (e) {
-      console.error('Failed to save cookie consent:', e);
+      if (isDev) console.error('Failed to save cookie consent:', e);
     }
   };
 
@@ -459,13 +463,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       localStorage.setItem('ai_tracker_cookies_accepted', 'false');
     } catch (e) {
-      console.error('Failed to save cookie consent:', e);
+      if (isDev) console.error('Failed to save cookie consent:', e);
     }
   };
 
   const submitSupportTicket = (category: string, message: string) => {
-    trackEvent('support_ticket_created', { category, message });
-    showToast('Thank you! Your feedback ticket has been received.', 'success');
+    const safeCategory = stripHtml(category).slice(0, 100);
+    const safeMessage = stripHtml(message).slice(0, 2000);
+    const ticketId = `TK-${Math.floor(10000 + Math.random() * 90000)}`;
+    trackEvent('support_ticket_created', { ticketId, category: safeCategory, message: safeMessage });
+    showToast(`Thank you! Your feedback ticket #${ticketId} has been received.`, 'success');
     setIsSupportModalOpen(false);
   };
 

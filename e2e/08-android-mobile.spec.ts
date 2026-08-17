@@ -27,7 +27,7 @@ test.describe('CUJ-11: Android Mobile UX & Touch Navigation', () => {
 
     // 4. Verify Workout Plan view loaded and drawer closed
     await expect(moreDrawer).not.toBeVisible();
-    await expect(authenticatedPage.getByTestId('workout-view')).toBeVisible();
+    await expect(authenticatedPage.getByTestId('workout-plan-view')).toBeVisible();
 
     // 5. Tap center Scan button from bottom bar
     const centerScan = authenticatedPage.getByTestId('bottom-nav-center-scan');

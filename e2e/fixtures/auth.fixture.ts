@@ -19,6 +19,7 @@ export const test = base.extend<CustomFixtures>({
         localStorage.setItem('ai_nutrition_onboarded', 'true');
         localStorage.setItem('ai_nutrition_theme', 'dark');
         localStorage.setItem('ai_tracker_cookies_accepted', 'true');
+        localStorage.setItem('ai_tracker_logged_in', 'true');
         localStorage.setItem('ai_tracker_plan', 'pro');
       },
       { user: MOCK_TEST_USER, prefs: MOCK_TEST_PREFERENCES, logs: MOCK_TEST_MEAL_LOGS }

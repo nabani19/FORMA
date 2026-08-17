@@ -100,7 +100,7 @@ Maintain current whole-food micronutrient intake and ensure daily sun exposure o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto" data-testid="pdf-export-modal">
       <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 my-auto max-h-[90vh] overflow-y-auto">
         
         {/* Modal Header */}
@@ -112,6 +112,7 @@ Maintain current whole-food micronutrient intake and ensure daily sun exposure o
           <button
             onClick={onClose}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            data-testid="btn-close-pdf-modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -136,6 +137,7 @@ Maintain current whole-food micronutrient intake and ensure daily sun exposure o
                     ? 'bg-indigo-500/20 border-indigo-500 text-indigo-200 shadow-md ring-1 ring-indigo-500'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
                 }`}
+                data-testid={`tab-report-${tab.id}`}
               >
                 <div className="flex items-center justify-between">
                   <Icon className="w-4 h-4 text-indigo-400" />
@@ -234,6 +236,7 @@ Maintain current whole-food micronutrient intake and ensure daily sun exposure o
             <button
               onClick={handleDownloadText}
               className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              data-testid="btn-download-report"
             >
               <Download className="w-4 h-4" />
               <span>Download File</span>
@@ -241,6 +244,7 @@ Maintain current whole-food micronutrient intake and ensure daily sun exposure o
             <button
               onClick={handlePrint}
               className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-500/25 transition-all"
+              data-testid="btn-print-report"
             >
               <Printer className="w-4 h-4" />
               <span>Print / Save as PDF</span>

@@ -325,7 +325,7 @@ export const SupplementView: React.FC = () => {
               {budgetUtilizationPct}% Used
             </span>
           </div>
-          <div className={`text-2xl font-extrabold font-mono ${isOverBudget ? 'text-rose-400' : 'text-purple-400'}`}>
+          <div className={`text-2xl font-extrabold font-mono ${isOverBudget ? 'text-rose-400' : 'text-purple-400'}`} data-testid="total-monthly-inr">
             ₹{totalMonthlyINR.toLocaleString('en-IN')}{' '}
             <span className="text-xs text-slate-400 font-normal">/ ₹{userBudget.toLocaleString('en-IN')}</span>
           </div>
@@ -343,7 +343,7 @@ export const SupplementView: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-2">
-            <span>{selectedSupplements.length} of {allSupplements.length} Selected</span>
+            <span data-testid="selected-supplements-count">{selectedSupplements.length} of {allSupplements.length} Selected</span>
             <span className={`font-bold ${isOverBudget ? 'text-rose-400' : 'text-emerald-300'}`}>
               {isOverBudget ? `-₹${Math.abs(budgetRemaining)} Over` : `+₹${budgetRemaining} Buffer`}
             </span>
@@ -366,6 +366,7 @@ export const SupplementView: React.FC = () => {
             onClick={handleAutoFitToBudget}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all"
             title="Auto-select best ranked items fitting your budget"
+            data-testid="btn-auto-fit"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
             <span>AI Auto-Fit</span>
@@ -374,6 +375,7 @@ export const SupplementView: React.FC = () => {
           <button
             onClick={handleSelectAll}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all border border-slate-700"
+            data-testid="btn-select-all"
           >
             <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
             <span>Select All ({allSupplements.length})</span>
@@ -382,6 +384,7 @@ export const SupplementView: React.FC = () => {
           <button
             onClick={handleClearAll}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-300 text-xs font-bold transition-all border border-slate-700"
+            data-testid="btn-reset-supplements"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Clear</span>
@@ -443,6 +446,7 @@ export const SupplementView: React.FC = () => {
             <div
               key={supp.id}
               className="bg-slate-900/90 border border-purple-500/40 hover:border-purple-400 rounded-3xl p-5 shadow-xl transition-all space-y-4 backdrop-blur-xl relative overflow-hidden group"
+              data-testid={`supplement-card-${supp.id}`}
             >
               {/* Left edge indicator */}
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-purple-500" />
@@ -454,6 +458,7 @@ export const SupplementView: React.FC = () => {
                     onClick={() => toggleSupplement(supp.id)}
                     className="p-1 rounded-xl bg-emerald-500 text-slate-950 hover:bg-rose-500 hover:text-white transition-all shrink-0 shadow-md group/btn"
                     title="Click to unselect / remove from stack"
+                    data-testid={`btn-toggle-supplement-${supp.id}`}
                   >
                     <Check className="w-4 h-4 block group-hover/btn:hidden" />
                     <Minus className="w-4 h-4 hidden group-hover/btn:block" />
@@ -564,6 +569,7 @@ export const SupplementView: React.FC = () => {
                 key={supp.id}
                 onClick={() => toggleSupplement(supp.id)}
                 className="bg-slate-900/40 border border-slate-800/80 hover:border-purple-500/40 rounded-2xl p-4 transition-all opacity-85 hover:opacity-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
+                data-testid={`supplement-card-${supp.id}`}
               >
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg border border-slate-700 bg-slate-950 flex items-center justify-center text-slate-500 group-hover:border-purple-400 group-hover:text-purple-300 transition-all shrink-0 mt-0.5">
@@ -593,6 +599,7 @@ export const SupplementView: React.FC = () => {
                     toggleSupplement(supp.id);
                   }}
                   className="px-3.5 py-2 rounded-xl bg-purple-500/10 group-hover:bg-purple-500 group-hover:text-slate-950 border border-purple-500/30 text-purple-300 text-xs font-bold font-mono transition-all flex items-center justify-center gap-1.5 shrink-0 self-end sm:self-center"
+                  data-testid={`btn-toggle-supplement-${supp.id}`}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add to Stack</span>

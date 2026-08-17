@@ -5,8 +5,8 @@
 
 import { stripHtml } from './securityEngine';
 
-// Secure API Key handling via environment variable (never hardcode in source)
-export const OPENROUTER_API_KEY = (import.meta as any).env?.VITE_OPENROUTER_API_KEY || '';
+// Secure API Key handling via environment variable (internal to module, never exported)
+const OPENROUTER_API_KEY = (import.meta as any).env?.VITE_OPENROUTER_API_KEY || '';
 export const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
 export interface AiChatMessage {

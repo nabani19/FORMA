@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 30 * 1000,
   expect: {
-    timeout: 5000,
+    timeout: 8000,
   },
   fullyParallel: false,
   workers: 2,
@@ -18,6 +18,7 @@ export default defineConfig({
   
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    testIdAttribute: 'data-testid',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

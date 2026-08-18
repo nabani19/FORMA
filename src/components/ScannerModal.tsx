@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { FoodItem } from '../types';
 import { ScanResultCard } from './ScanResultCard';
@@ -14,22 +14,23 @@ import {
   Image as ImageIcon,
   Scale,
   ScanLine,
-  HelpCircle,
   Layers,
-  ChevronRight,
-  Info
+  Info,
+  Mic,
+  MicOff,
+  SwitchCamera,
+  Zap,
+  ZapOff
 } from 'lucide-react';
 import { 
   analyzeFoodWithAiVision, 
   analyzeNutritionLabelOcr,
   lookupBarcodeProduct, 
-  VISUAL_PORTION_GUIDES,
-  VisualPortionUnit,
-  convertVisualPortionToGrams
+  VISUAL_PORTION_GUIDES
 } from '../utils/aiVisionService';
 
 export const ScannerModal: React.FC = () => {
-  const { isScannerOpen, setIsScannerOpen, foodDatabase, showToast } = useApp();
+  const { isScannerOpen, setIsScannerOpen, showToast } = useApp();
 
   const [mode, setMode] = useState<'camera' | 'upload' | 'label_ocr' | 'text' | 'barcode'>('camera');
   const [isScanning, setIsScanning] = useState<boolean>(false);
@@ -40,19 +41,110 @@ export const ScannerModal: React.FC = () => {
   const [showPortionGuide, setShowPortionGuide] = useState<boolean>(false);
 
   // Filters & inputs
-  const [cuisineFilter, setCuisineFilter] = useState<'All' | 'Indian' | 'Global'>('All');
   const [manualBarcode, setManualBarcode] = useState<string>('');
   const [textMealQuery, setTextMealQuery] = useState<string>('');
 
   // Image Preview & Base64
   const [currentImagePreview, setCurrentImagePreview] = useState<string | null>(null);
 
-  // WebCam & Native File Input reference
+  // WebCam controls
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
   const [isWebcamActive, setIsWebcamActive] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [isTorchOn, setIsTorchOn] = useState<boolean>(false);
+  const [hasTorchSupport, setHasTorchSupport] = useState<boolean>(false);
+
+  // Speech-to-Text State
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Live Barcode Scanner Interval
+  const barcodeIntervalRef = useRef<any>(null);
+
+  const stopWebcam = useCallback(() => {
+    if (barcodeIntervalRef.current) {
+      clearInterval(barcodeIntervalRef.current);
+      barcodeIntervalRef.current = null;
+    }
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+      setIsWebcamActive(false);
+      setIsTorchOn(false);
+    }
+  }, []);
+
+  const startWebcam = useCallback(async (targetFacing: 'environment' | 'user' = facingMode) => {
+    setCameraError(null);
+    stopWebcam();
+
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        setCameraError('Live camera not supported in this browser. You can snap a photo with your device camera or upload an image.');
+        setIsWebcamActive(false);
+        return;
+      }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: targetFacing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.muted = true;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch((e) => console.warn('Autoplay prevented:', e));
+        };
+        setIsWebcamActive(true);
+
+        // Check torch support
+        const track = stream.getVideoTracks()[0];
+        const capabilities = (track.getCapabilities?.() || {}) as any;
+        setHasTorchSupport(Boolean(capabilities.torch));
+      }
+    } catch (err: any) {
+      console.warn('Camera access denied or unavailable:', err);
+      setCameraError('Camera access not granted or unavailable. You can snap photos with your phone camera, upload images, or describe meals.');
+      setIsWebcamActive(false);
+    }
+  }, [facingMode, stopWebcam]);
+
+  // Flip camera between front and back
+  const handleFlipCamera = () => {
+    const nextFacing = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(nextFacing);
+    startWebcam(nextFacing);
+  };
+
+  // Toggle Torch / Flashlight
+  const handleToggleTorch = async () => {
+    if (!videoRef.current?.srcObject) return;
+    const stream = videoRef.current.srcObject as MediaStream;
+    const track = stream.getVideoTracks()[0];
+    if (track) {
+      try {
+        const nextState = !isTorchOn;
+        await (track as any).applyConstraints({
+          advanced: [{ torch: nextState }],
+        });
+        setIsTorchOn(nextState);
+      } catch (err) {
+        console.warn('Torch control failed:', err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!isScannerOpen) {
@@ -63,41 +155,54 @@ export const ScannerModal: React.FC = () => {
       setTextMealQuery('');
       setCameraError(null);
       setShowPortionGuide(false);
-    } else if (mode === 'camera' || mode === 'label_ocr') {
-      startWebcam();
-    }
-  }, [isScannerOpen, mode]);
-
-  const startWebcam = async () => {
-    setCameraError(null);
-    try {
-      if (!navigator?.mediaDevices?.getUserMedia) {
-        setCameraError('Webcam API not supported in this browser context.');
-        setIsWebcamActive(false);
-        return;
+      if (isListening && recognitionRef.current) {
+        recognitionRef.current.stop();
+        setIsListening(false);
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setIsWebcamActive(true);
-      }
-    } catch (err: any) {
-      console.warn('Webcam not available or permission denied:', err);
-      setCameraError('Camera access not granted or unavailable. You can upload photos or describe meals below.');
-      setIsWebcamActive(false);
+    } else if (mode === 'camera' || mode === 'label_ocr' || mode === 'barcode') {
+      startWebcam(facingMode);
+    } else {
+      stopWebcam();
     }
-  };
+  }, [isScannerOpen, mode, startWebcam, stopWebcam, facingMode, isListening]);
 
-  const stopWebcam = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-      setIsWebcamActive(false);
+  // Live Barcode Detection if BarcodeDetector is supported
+  useEffect(() => {
+    if (isScannerOpen && mode === 'barcode' && isWebcamActive && 'BarcodeDetector' in window) {
+      try {
+        const barcodeDetector = new (window as any).BarcodeDetector({
+          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code', 'code_128'],
+        });
+
+        barcodeIntervalRef.current = setInterval(async () => {
+          if (videoRef.current && videoRef.current.readyState >= 2 && !isScanning && !scannedResult) {
+            try {
+              const barcodes = await barcodeDetector.detect(videoRef.current);
+              if (barcodes.length > 0) {
+                const detectedCode = barcodes[0].rawValue;
+                if (detectedCode) {
+                  clearInterval(barcodeIntervalRef.current);
+                  barcodeIntervalRef.current = null;
+                  handleBarcodeSubmit(detectedCode);
+                }
+              }
+            } catch (e) {
+              // Ignore single frame detection error
+            }
+          }
+        }, 600);
+      } catch (e) {
+        console.warn('BarcodeDetector initialization error:', e);
+      }
     }
-  };
+
+    return () => {
+      if (barcodeIntervalRef.current) {
+        clearInterval(barcodeIntervalRef.current);
+        barcodeIntervalRef.current = null;
+      }
+    };
+  }, [isScannerOpen, mode, isWebcamActive, isScanning, scannedResult]);
 
   // Capture frame from webcam and run AI Vision or OCR
   const handleCaptureCameraFrame = async () => {
@@ -107,12 +212,14 @@ export const ScannerModal: React.FC = () => {
       try {
         const video = videoRef.current;
         const canvas = canvasRef.current || document.createElement('canvas');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
+        const width = video.videoWidth || 640;
+        const height = video.videoHeight || 480;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          capturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+          ctx.drawImage(video, 0, 0, width, height);
+          capturedBase64 = canvas.toDataURL('image/jpeg', 0.88);
           setCurrentImagePreview(capturedBase64);
         }
       } catch (e) {
@@ -125,13 +232,12 @@ export const ScannerModal: React.FC = () => {
     } else {
       await runAiVisionScan({
         imageBase64: capturedBase64,
-        cuisineHint: cuisineFilter as any,
         scanMode: 'multi_item',
       });
     }
   };
 
-  // Capture from uploaded file
+  // Capture from uploaded file or mobile native camera
   const handleFileInputCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -145,12 +251,60 @@ export const ScannerModal: React.FC = () => {
       } else {
         await runAiVisionScan({
           imageBase64: base64,
-          cuisineHint: cuisineFilter as any,
           scanMode: 'multi_item',
         });
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  // Speech-to-Text Voice Dictation for Describe Meal Mode
+  const toggleSpeechRecognition = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      showToast('Voice recognition is not supported in this browser. Please type your meal.', 'info');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        showToast('🎙️ Listening... Speak what you ate.', 'info');
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('');
+        setTextMealQuery(transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (e) {
+      console.warn('Failed to start speech recognition:', e);
+      setIsListening(false);
+    }
   };
 
   // Text meal description scan
@@ -163,26 +317,8 @@ export const ScannerModal: React.FC = () => {
     }
     await runAiVisionScan({
       textDescription: query,
-      cuisineHint: cuisineFilter as any,
       scanMode: 'multi_item',
     });
-  };
-
-  // Trigger scan for a selected preset food
-  const handlePresetFoodSelect = async (presetFood: FoodItem) => {
-    setIsScanning(true);
-    setScannedResult(null);
-    setCurrentImagePreview(presetFood.imageUrl);
-    setScanStepText(`Recognizing ${presetFood.name}...`);
-
-    setTimeout(() => {
-      setScanStepText('Matching ICMR-NIN & USDA nutritional database...');
-      setTimeout(() => {
-        setIsScanning(false);
-        setScannedResult(presetFood);
-        showToast(`Identified: ${presetFood.name}`, 'success');
-      }, 500);
-    }, 400);
   };
 
   // Dedicated OCR Runner
@@ -207,19 +343,18 @@ export const ScannerModal: React.FC = () => {
   const runAiVisionScan = async (options: {
     imageBase64?: string;
     textDescription?: string;
-    cuisineHint?: 'All' | 'Indian' | 'Global';
     scanMode?: 'standard' | 'multi_item' | 'nutrition_label_ocr';
   }) => {
     setIsScanning(true);
     setScannedResult(null);
-    setScanStepText('Analyzing food photo with Gemini 2.5 Flash Vision...');
+    setScanStepText('Analyzing meal with Gemini 3.7 Flash Multimodal Vision...');
 
     try {
       const result = await analyzeFoodWithAiVision(
         {
           imageBase64: options.imageBase64,
           textDescription: options.textDescription,
-          cuisineHint: options.cuisineHint || 'All',
+          cuisineHint: 'All',
           scanMode: options.scanMode || 'multi_item',
         },
         (step) => setScanStepText(step)
@@ -239,7 +374,7 @@ export const ScannerModal: React.FC = () => {
   const handleBarcodeSubmit = async (code?: string) => {
     const searchCode = (code || manualBarcode).trim();
     if (!searchCode) {
-      showToast('Please enter a barcode number or select a sample barcode.', 'warning');
+      showToast('Please enter a barcode number or scan a barcode.', 'warning');
       return;
     }
 
@@ -269,35 +404,29 @@ export const ScannerModal: React.FC = () => {
     }
   };
 
-  const displayedPresets = foodDatabase.filter((f) => {
-    if (cuisineFilter === 'Indian') return f.cuisine === 'Indian';
-    if (cuisineFilter === 'Global') return f.cuisine !== 'Indian';
-    return true;
-  });
-
   if (!isScannerOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto" data-testid="scanner-modal">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl overflow-hidden my-auto max-h-[94vh] flex flex-col">
         
         {/* Hidden Canvas for Frame Capture */}
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Header */}
         <div className="flex items-center justify-between mb-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <h2 className="font-heading font-bold text-lg text-slate-100 flex items-center gap-2">
                 <span>AI Food & Vision Intelligence</span>
                 <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase tracking-wider">
-                  Gemini 2.5 Flash
+                  Gemini 3.7 Flash
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Plate Decomposition • Nutrition Label OCR • USDA & ICMR-NIN</p>
+              <p className="text-xs text-slate-400">Scan Meal Photo • Snap Nutrition Label • Voice & Text Macro Tracker</p>
             </div>
           </div>
 
@@ -324,13 +453,13 @@ export const ScannerModal: React.FC = () => {
 
         {/* Mode Selector Tabs */}
         {!scannedResult && (
-          <div className="flex bg-slate-950/70 p-1 rounded-2xl border border-slate-800 mb-4 shrink-0 overflow-x-auto gap-1">
+          <div className="flex bg-slate-950/70 p-1 rounded-2xl border border-slate-800 mb-4 shrink-0 overflow-x-auto gap-1 scrollbar-none">
             <button
               onClick={() => {
                 setMode('camera');
-                startWebcam();
+                startWebcam(facingMode);
               }}
-              className={`flex-1 min-w-[85px] flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 min-w-[80px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 mode === 'camera'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -345,7 +474,7 @@ export const ScannerModal: React.FC = () => {
                 setMode('upload');
                 stopWebcam();
               }}
-              className={`flex-1 min-w-[85px] flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 min-w-[80px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 mode === 'upload'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -358,9 +487,9 @@ export const ScannerModal: React.FC = () => {
             <button
               onClick={() => {
                 setMode('label_ocr');
-                startWebcam();
+                startWebcam(facingMode);
               }}
-              className={`flex-1 min-w-[95px] flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 min-w-[90px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 mode === 'label_ocr'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -375,7 +504,7 @@ export const ScannerModal: React.FC = () => {
                 setMode('text');
                 stopWebcam();
               }}
-              className={`flex-1 min-w-[90px] flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 min-w-[85px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 mode === 'text'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -388,9 +517,9 @@ export const ScannerModal: React.FC = () => {
             <button
               onClick={() => {
                 setMode('barcode');
-                stopWebcam();
+                startWebcam(facingMode);
               }}
-              className={`flex-1 min-w-[85px] flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 min-w-[80px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 mode === 'barcode'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -406,7 +535,7 @@ export const ScannerModal: React.FC = () => {
         {isScanning && (
           <div className="min-h-[260px] flex flex-col items-center justify-center p-8 bg-slate-950/90 rounded-2xl border border-emerald-500/40 text-center space-y-4 my-auto">
             {currentImagePreview ? (
-              <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-400 shadow-lg shadow-emerald-500/20 mb-2">
+              <div className="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-emerald-400 shadow-xl shadow-emerald-500/20 mb-2">
                 <img src={currentImagePreview} alt="Scanning target" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-[1px] flex items-center justify-center">
                   <div className="w-full h-1 bg-emerald-400 shadow-md shadow-emerald-400 animate-laser" />
@@ -430,40 +559,79 @@ export const ScannerModal: React.FC = () => {
           <div className="space-y-4 overflow-y-auto pr-1">
             
             {/* Viewfinder */}
-            <div className="relative h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+            <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
               {isWebcamActive ? (
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               ) : (
-                <div className="text-center p-6 space-y-2">
-                  <Camera className="w-12 h-12 text-slate-600 mx-auto" />
-                  <p className="text-xs font-semibold text-slate-400">
-                    {cameraError || 'Live Camera Feed Ready or Select Preset Dishes Below'}
+                <div className="text-center p-6 space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mx-auto">
+                    <Camera className="w-7 h-7" />
+                  </div>
+                  <p className="text-xs font-semibold text-slate-300 max-w-xs mx-auto">
+                    {cameraError || 'Live camera stream is ready. You can snap a photo or upload from your device.'}
                   </p>
-                  <button
-                    onClick={startWebcam}
-                    className="text-xs font-bold text-emerald-400 underline hover:text-emerald-300"
-                  >
-                    Enable Device Camera
-                  </button>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      onClick={() => startWebcam(facingMode)}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/30 transition-colors"
+                    >
+                      Enable Live Webcam
+                    </button>
+                    <button
+                      onClick={() => nativeCameraInputRef.current?.click()}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 text-xs font-bold hover:bg-slate-700 transition-colors"
+                    >
+                      Snap with Phone Camera
+                    </button>
+                  </div>
                 </div>
               )}
 
               {/* Scanning Reticle & Laser Sweep Animation */}
-              <div className="absolute inset-8 border-2 border-dashed border-emerald-500/40 rounded-2xl pointer-events-none flex items-center justify-center">
-                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-lg shadow-emerald-400/80 animate-laser" />
-              </div>
-              <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-emerald-400 pointer-events-none" />
-              <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-emerald-400 pointer-events-none" />
-              <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-emerald-400 pointer-events-none" />
-              <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-emerald-400 pointer-events-none" />
+              {isWebcamActive && (
+                <>
+                  <div className="absolute inset-8 border-2 border-dashed border-emerald-500/40 rounded-2xl pointer-events-none flex items-center justify-center">
+                    <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-lg shadow-emerald-400/80 animate-laser" />
+                  </div>
+                  <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-emerald-400 pointer-events-none" />
+                  <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-emerald-400 pointer-events-none" />
+                  <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-emerald-400 pointer-events-none" />
+                  <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-emerald-400 pointer-events-none" />
 
-              <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[11px] font-medium text-slate-300 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Auto Plate Decomposition Active</span>
-                </span>
-                <span>Positions all items in frame</span>
-              </div>
+                  {/* Camera Controls (Flip & Torch) */}
+                  <div className="absolute top-3 right-3 flex items-center gap-2">
+                    {hasTorchSupport && (
+                      <button
+                        onClick={handleToggleTorch}
+                        className={`p-2 rounded-xl backdrop-blur-md border text-xs transition-colors ${
+                          isTorchOn
+                            ? 'bg-amber-500/30 border-amber-400 text-amber-300'
+                            : 'bg-slate-900/80 border-slate-700 text-slate-300 hover:text-white'
+                        }`}
+                        title="Toggle Flashlight"
+                      >
+                        {isTorchOn ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={handleFlipCamera}
+                      className="p-2 rounded-xl bg-slate-900/80 backdrop-blur-md border border-slate-700 text-slate-300 hover:text-white transition-colors"
+                      title="Flip Camera (Front / Rear)"
+                    >
+                      <SwitchCamera className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[11px] font-medium text-slate-300 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/60">
+                    <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Auto Plate Decomposition Active</span>
+                    </span>
+                    <span className="text-slate-400">Position meal in reticle</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -473,20 +641,17 @@ export const ScannerModal: React.FC = () => {
                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs sm:text-sm py-3 rounded-xl shadow-xl shadow-emerald-500/20 transition-transform active:scale-95"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Capture & Decompose Plate</span>
+                <span>Capture & Decompose Meal</span>
               </button>
 
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => nativeCameraInputRef.current?.click()}
                 className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs sm:text-sm py-3 rounded-xl border border-slate-700 transition-transform active:scale-95"
               >
-                <Upload className="w-4 h-4 text-emerald-400" />
-                <span>Snap / Upload Image</span>
+                <Camera className="w-4 h-4 text-emerald-400" />
+                <span>Take Photo with Phone Camera</span>
               </button>
             </div>
-
-            {/* Preset Food Test Section */}
-            {renderPresetFoodSection()}
 
           </div>
         )}
@@ -496,29 +661,38 @@ export const ScannerModal: React.FC = () => {
           <div className="space-y-4 overflow-y-auto pr-1">
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="h-56 sm:h-64 rounded-2xl border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-950/60 flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-colors group"
+              className="h-64 sm:h-72 rounded-2xl border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-950/60 flex flex-col items-center justify-center p-6 text-center cursor-pointer transition-colors group"
             >
-              <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 mb-3 transition-colors">
-                <ImageIcon className="w-7 h-7" />
+              <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 mb-3 transition-colors">
+                <ImageIcon className="w-8 h-8" />
               </div>
               <h3 className="text-sm font-bold text-slate-200">Upload Food Photo or Meal Picture</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-sm">
-                Drop food photo here or click to select. Automatically segments multi-dish plates into component items.
+                Drop your food photo here or click to select from gallery. Gemini 3.7 Flash decomposes multi-dish plates into component items.
               </p>
-              <span className="mt-3 px-4 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
-                Browse Files
-              </span>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="px-5 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-extrabold shadow-md">
+                  Browse Files / Gallery
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nativeCameraInputRef.current?.click();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 text-xs font-bold hover:bg-slate-700"
+                >
+                  Open Phone Camera
+                </button>
+              </div>
             </div>
-
-            {/* Preset Food Test Section */}
-            {renderPresetFoodSection()}
           </div>
         )}
 
         {/* MODE 3: NUTRITION LABEL OCR SCANNER */}
         {!isScanning && !scannedResult && mode === 'label_ocr' && (
           <div className="space-y-4 overflow-y-auto pr-1">
-            <div className="relative h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
               {isWebcamActive ? (
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               ) : (
@@ -528,7 +702,7 @@ export const ScannerModal: React.FC = () => {
                     {cameraError || 'Align Nutrition Facts Label on Box/Can/Jar'}
                   </p>
                   <button
-                    onClick={startWebcam}
+                    onClick={() => startWebcam(facingMode)}
                     className="text-xs font-bold text-emerald-400 underline hover:text-emerald-300"
                   >
                     Enable Device Camera
@@ -537,16 +711,18 @@ export const ScannerModal: React.FC = () => {
               )}
 
               {/* OCR Reticle Box */}
-              <div className="absolute inset-x-12 inset-y-6 border-2 border-amber-500/60 rounded-xl pointer-events-none flex flex-col justify-between p-2">
-                <div className="flex justify-between items-center text-[10px] font-mono text-amber-400 bg-slate-950/70 px-2 py-0.5 rounded">
-                  <span>NUTRITION FACTS OCR</span>
-                  <span className="animate-pulse">● READY</span>
+              {isWebcamActive && (
+                <div className="absolute inset-x-12 inset-y-6 border-2 border-amber-500/60 rounded-xl pointer-events-none flex flex-col justify-between p-2">
+                  <div className="flex justify-between items-center text-[10px] font-mono text-amber-400 bg-slate-950/70 px-2 py-0.5 rounded">
+                    <span>NUTRITION FACTS OCR</span>
+                    <span className="animate-pulse">● READY</span>
+                  </div>
+                  <div className="w-full h-0.5 bg-amber-400 shadow-md shadow-amber-400/80 animate-laser" />
+                  <div className="text-center text-[10px] text-slate-400 bg-slate-950/70 py-0.5 rounded">
+                    Align printed nutrition table in frame
+                  </div>
                 </div>
-                <div className="w-full h-0.5 bg-amber-400 shadow-md shadow-amber-400/80 animate-laser" />
-                <div className="text-center text-[10px] text-slate-400 bg-slate-950/70 py-0.5 rounded">
-                  Align printed nutrition table in frame
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -579,71 +755,72 @@ export const ScannerModal: React.FC = () => {
           </div>
         )}
 
-        {/* MODE 4: DESCRIBE MEAL / TEXT SEARCH VIEW */}
+        {/* MODE 4: DESCRIBE MEAL / TEXT & VOICE SEARCH VIEW */}
         {!isScanning && !scannedResult && mode === 'text' && (
           <div className="space-y-4 overflow-y-auto pr-1">
             <form onSubmit={handleTextScanSubmit} className="space-y-3">
-              <label className="text-xs font-semibold text-slate-300 block">
-                Type or describe what you ate / plan to eat:
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Type or speak what you ate:
+                </label>
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                    isListening
+                      ? 'bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30'
+                      : 'bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-700'
+                  }`}
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-3.5 h-3.5" />
+                      <span>Listening...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Voice Input</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               <div className="relative">
                 <textarea
                   value={textMealQuery}
                   onChange={(e) => setTextMealQuery(e.target.value)}
                   placeholder="e.g. 2 Tawa Rotis with 1 bowl Dal Makhani, 1 cup Jeera Rice and fresh Cucumber Salad"
-                  rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none font-medium leading-relaxed"
+                  rows={4}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none font-medium leading-relaxed"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs sm:text-sm py-3 rounded-xl shadow-xl shadow-emerald-500/20 transition-transform active:scale-95"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-extrabold text-xs sm:text-sm py-3.5 rounded-xl shadow-xl shadow-emerald-500/20 transition-transform active:scale-95"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Calculate & Decompose Macros</span>
               </button>
             </form>
-
-            <div className="pt-1">
-              <span className="text-xs font-semibold text-slate-400 block mb-2">Example Composite Meals:</span>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  '2 Tawa Rotis with 1 Bowl Dal Tadka & Salad',
-                  'Chicken Breast with Steamed Rice & Broccoli',
-                  '2 Paneer Parathas with 1 Bowl Curd',
-                  'Masala Dosa with Sambar & Coconut Chutney',
-                  '1 Bowl Soya Chunks Curry with 2 Rotis & Rice',
-                  'Overnight Oats with Chia Seeds, Whey & Berries'
-                ].map((sample, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setTextMealQuery(sample);
-                      runAiVisionScan({ textDescription: sample, cuisineHint: cuisineFilter as any, scanMode: 'multi_item' });
-                    }}
-                    className="text-[11px] font-medium bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-emerald-300 px-3 py-1.5 rounded-xl border border-slate-700 transition-colors"
-                  >
-                    + {sample}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Preset Food Test Section */}
-            {renderPresetFoodSection()}
           </div>
         )}
 
         {/* MODE 5: BARCODE SCANNER VIEW */}
         {!isScanning && !scannedResult && mode === 'barcode' && (
           <div className="space-y-4 overflow-y-auto pr-1">
-            <div className="relative h-40 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex flex-col items-center justify-center p-6 text-center">
-              <div className="w-full max-w-xs h-20 border-2 border-dashed border-rose-500/50 rounded-xl relative flex items-center justify-center bg-slate-900/50">
+            <div className="relative h-56 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex flex-col items-center justify-center p-4 text-center">
+              {isWebcamActive ? (
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              ) : null}
+
+              <div className="absolute inset-x-8 inset-y-6 border-2 border-dashed border-rose-500/60 rounded-xl pointer-events-none flex items-center justify-center bg-slate-900/30 backdrop-blur-[1px]">
                 <div className="w-full h-1 bg-rose-500 shadow-lg shadow-rose-500 animate-laser" />
-                <Barcode className="w-16 h-16 text-slate-700 opacity-40" />
               </div>
-              <p className="text-xs text-slate-400 mt-2 font-medium">Position barcode inside laser window or enter below</p>
+              <p className="absolute bottom-2 inset-x-0 text-[10px] text-slate-300 font-semibold bg-slate-950/80 backdrop-blur-md py-1 mx-4 rounded-lg">
+                Position 13-digit EAN/UPC inside laser window or enter code below
+              </p>
             </div>
 
             <div className="flex gap-2">
@@ -661,34 +838,24 @@ export const ScannerModal: React.FC = () => {
                 Scan Code
               </button>
             </div>
-
-            <div>
-              <span className="text-xs font-semibold text-slate-400 block mb-2">Sample packaged barcodes:</span>
-              <div className="grid grid-cols-2 gap-2">
-                {foodDatabase.filter((f) => f.barcode).slice(0, 6).map((item) => (
-                  <button
-                    key={item._id}
-                    onClick={() => handleBarcodeSubmit(item.barcode)}
-                    className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-left transition-all flex items-center gap-2"
-                  >
-                    <img src={item.imageUrl} alt={item.name} className="w-8 h-8 rounded-lg object-cover" />
-                    <div>
-                      <div className="text-[11px] font-bold text-slate-200 line-clamp-1">{item.name}</div>
-                      <div className="text-[9px] font-mono text-emerald-400">{item.barcode}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
-        {/* Hidden native input for mobile Android camera/gallery */}
+        {/* Hidden native input for gallery / file uploads */}
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileInputCapture}
+          className="hidden"
+        />
+
+        {/* Hidden native input for mobile device camera */}
         <input
           type="file"
           accept="image/*"
           capture="environment"
-          ref={fileInputRef}
+          ref={nativeCameraInputRef}
           onChange={handleFileInputCapture}
           className="hidden"
         />
@@ -775,44 +942,4 @@ export const ScannerModal: React.FC = () => {
       </div>
     </div>
   );
-
-  // Helper render for preset dishes testing
-  function renderPresetFoodSection() {
-    return (
-      <div className="pt-2 border-t border-slate-800/80">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-slate-400">Select dish to test scanner:</span>
-          <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-            {['All', 'Indian', 'Global'].map((c) => (
-              <button
-                key={c}
-                onClick={() => setCuisineFilter(c as any)}
-                className={`px-2.5 py-0.5 text-[11px] font-bold rounded-md transition-all ${
-                  cuisineFilter === c ? 'bg-emerald-500 text-slate-950' : 'text-slate-400'
-                }`}
-              >
-                {c === 'Indian' ? '🇮🇳 Indian' : c === 'Global' ? '🌎 Global' : 'All'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
-          {displayedPresets.map((item) => (
-            <button
-              key={item._id}
-              onClick={() => handlePresetFoodSelect(item)}
-              className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-left transition-all hover:scale-[1.02] flex items-center gap-2"
-            >
-              <img src={item.imageUrl} alt={item.name} className="w-10 h-10 object-cover rounded-lg shrink-0" />
-              <div className="min-w-0">
-                <div className="text-[11px] font-bold text-slate-200 truncate">{item.name}</div>
-                <div className="text-[9px] text-emerald-400 font-semibold">{item.cuisine}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
 };

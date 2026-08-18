@@ -327,6 +327,44 @@ async function runAllTRACkerTests() {
     }
   });
 
+  // Test 17: Resilient AI Vision Markdown JSON Parser
+  await runTest('AI Vision response parser strips conversational prefix and markdown code fences seamlessly', () => {
+    const rawAiOutput = `Here is the nutritional analysis for the meal:
+\`\`\`json
+{
+  "_id": "scan_paneer_tikka_01",
+  "name": "Tandoori Paneer Tikka",
+  "hindiName": "पनीर टिक्का",
+  "category": "High Protein Starter",
+  "cuisine": "Indian",
+  "servingSizeGrams": 200,
+  "isDecomposedPlate": false,
+  "nutritionalInfo": {
+    "calories": 320,
+    "protein_g": 18.5,
+    "carbs_g": 8.0,
+    "netCarbs_g": 6.0,
+    "fat_g": 24.0,
+    "saturatedFat_g": 8.0,
+    "fiber_g": 2.0,
+    "sugar_g": 3.0
+  },
+  "ingredients": ["Paneer", "Bell Peppers", "Onions", "Yogurt", "Spices"],
+  "allergens": ["Dairy"],
+  "dietaryTags": ["Vegetarian", "High Protein", "Gluten-Free"],
+  "confidenceScore": 0.96
+}
+\`\`\`
+Hope this helps your macro goals!`;
+
+    const parsed = parseAndSanitizeAiFoodResponse(rawAiOutput);
+    assert.ok(parsed, 'Must successfully parse even with conversational wrappers and markdown code blocks');
+    assert.strictEqual(parsed.name, 'Tandoori Paneer Tikka');
+    assert.strictEqual(parsed.nutritionalInfo.protein_g, 18.5);
+    assert.strictEqual(parsed.nutritionalInfo.calories, 320);
+    assert.strictEqual(parsed.cuisine, 'Indian');
+  });
+
   console.log(`\n==================================================`);
   console.log(`TEST RESULTS: ${passed} Passed | ${failed} Failed`);
   console.log(`==================================================\n`);

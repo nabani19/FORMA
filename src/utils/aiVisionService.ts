@@ -223,18 +223,29 @@ CRITICAL INSTRUCTIONS:
     });
   }
 
-  // Vision candidate models on OpenRouter
+  // Vision candidate models on OpenRouter (multimodal image support)
   const visionCandidates = [
-    'google/gemini-2.5-flash',
-    'google/gemini-flash-1.5',
+    'google/gemini-3.7-flash',
+    'google/gemini-3.5-flash-lite',
     'openai/gpt-4o-mini',
-    'deepseek/deepseek-chat',
+    'google/gemini-3.6-flash',
   ];
 
+  // Text-only candidate models on OpenRouter
+  const textCandidates = [
+    'google/gemini-3.7-flash',
+    'google/gemini-3.5-flash-lite',
+    'deepseek/deepseek-chat',
+    'openai/gpt-4o-mini',
+  ];
+
+  const candidateList = imageBase64 ? visionCandidates : textCandidates;
+
   if (activeApiKey) {
-    for (const model of visionCandidates) {
+    for (const model of candidateList) {
       try {
-        onStepProgress?.(`Running neural vision inference with ${model.split('/')[1] || model}...`);
+        const modelShortName = model.split('/')[1] || model;
+        onStepProgress?.(`Running neural vision inference with ${modelShortName}...`);
 
         const response = await fetch(OPENROUTER_ENDPOINT, {
           method: 'POST',
@@ -251,7 +262,7 @@ CRITICAL INSTRUCTIONS:
               { role: 'user', content: userContent },
             ],
             temperature: 0.2,
-            max_tokens: 1800,
+            max_tokens: 2500,
             response_format: { type: 'json_object' },
           }),
         });
@@ -279,7 +290,7 @@ CRITICAL INSTRUCTIONS:
 
   // Fallback to intelligent semantic search if API calls were unavailable or exhausted
   onStepProgress?.('Matching ICMR-NIN & USDA nutritional database...');
-  return semanticFoodFallback(textDescription || 'Nutrient Rich Meal', cuisineHint, imageBase64);
+  return semanticFoodFallback(textDescription || (scanMode === 'nutrition_label_ocr' ? 'Nutrition Facts Label' : 'Nutrient Rich Meal'), cuisineHint, imageBase64);
 }
 
 /**
@@ -310,10 +321,15 @@ export function parseAndSanitizeAiFoodResponse(
   scanMode: string = 'standard'
 ): FoodItem | null {
   try {
-    // Strip markdown code fences if model enclosed it
+    // Strip markdown code fences and extract valid JSON payload
     let cleaned = rawJson.trim();
-    if (cleaned.startsWith('```')) {
-      cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
+    if (cleaned.includes('```')) {
+      cleaned = cleaned.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+    }
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
     }
 
     const data = JSON.parse(cleaned);
@@ -666,6 +682,119 @@ export function semanticFoodFallback(
       totalFat += isCurd ? 6.5 : 0.2;
       totalFiber += isCurd ? 0 : 2;
       totalGrams += 100;
+    }
+
+    // Detect Dosa / Idli / South Indian staples
+    if (q.includes('dosa') || q.includes('idli') || q.includes('sambar') || q.includes('vada') || q.includes('uttapam')) {
+      const isDosa = q.includes('dosa');
+      components.push({
+        id: `comp_south_${Date.now()}`,
+        name: isDosa ? 'Crisp Masala Dosa (1 Large)' : 'Steamed Rice Idli (2 Pcs)',
+        hindiName: isDosa ? 'मसाला डोसा' : 'इडली',
+        portionGrams: isDosa ? 180 : 120,
+        calories: isDosa ? 280 : 130,
+        protein_g: isDosa ? 6 : 4,
+        carbs_g: isDosa ? 42 : 28,
+        fat_g: isDosa ? 9 : 0.5,
+        fiber_g: isDosa ? 3 : 2,
+        category: 'South Indian Breakfast',
+        selected: true,
+      });
+      components.push({
+        id: `comp_sambar_${Date.now()}`,
+        name: 'Vegetable Lentil Sambar (1 Bowl)',
+        hindiName: 'सांभर',
+        portionGrams: 150,
+        calories: 95,
+        protein_g: 4.5,
+        carbs_g: 14,
+        fat_g: 2.2,
+        fiber_g: 3.5,
+        category: 'Lentil & Veg Soup',
+        selected: true,
+      });
+      components.push({
+        id: `comp_chutney_${Date.now()}`,
+        name: 'Fresh Coconut Chutney (2 Tbsp)',
+        hindiName: 'नारियल चटनी',
+        portionGrams: 30,
+        calories: 75,
+        protein_g: 1,
+        carbs_g: 3,
+        fat_g: 6.8,
+        fiber_g: 1.5,
+        category: 'Condiments',
+        selected: true,
+      });
+
+      totalCals += isDosa ? 450 : 300;
+      totalProt += isDosa ? 11.5 : 9.5;
+      totalCarbs += isDosa ? 59 : 45;
+      totalFat += isDosa ? 18 : 9.5;
+      totalFiber += isDosa ? 7.5 : 7;
+      totalGrams += isDosa ? 360 : 300;
+    }
+
+    // Detect Oats / Shake / Porridge
+    if (q.includes('oat') || q.includes('shake') || q.includes('smoothie') || q.includes('chia') || q.includes('whey')) {
+      components.push({
+        id: `comp_oats_${Date.now()}`,
+        name: 'Rolled Oats Porridge with Almond Milk',
+        hindiName: 'ओट्स',
+        portionGrams: 200,
+        calories: 220,
+        protein_g: 7,
+        carbs_g: 38,
+        fat_g: 4.5,
+        fiber_g: 6,
+        category: 'Breakfast Grains',
+        selected: true,
+      });
+      components.push({
+        id: `comp_whey_${Date.now()}`,
+        name: '1 Scoop 100% Whey Protein Isolate',
+        portionGrams: 30,
+        calories: 120,
+        protein_g: 25,
+        carbs_g: 2,
+        fat_g: 1,
+        fiber_g: 0,
+        category: 'Protein Supplement',
+        selected: true,
+      });
+
+      totalCals += 340;
+      totalProt += 32;
+      totalCarbs += 40;
+      totalFat += 5.5;
+      totalFiber += 6;
+      totalGrams += 230;
+    }
+
+    // Detect Eggs / Toast
+    if (q.includes('egg') || q.includes('omelet') || q.includes('toast') || q.includes('bhurji')) {
+      const eggCountMatch = q.match(/(\d+)\s*(?:egg|eggs|boiled egg)/i);
+      const eggCount = eggCountMatch ? parseInt(eggCountMatch[1], 10) : 2;
+      components.push({
+        id: `comp_eggs_${Date.now()}`,
+        name: `${eggCount} Whole Farm Boiled / Scrambled Eggs`,
+        hindiName: `${eggCount} उबले अंडे`,
+        portionGrams: eggCount * 50,
+        calories: eggCount * 75,
+        protein_g: eggCount * 6.5,
+        carbs_g: eggCount * 0.5,
+        fat_g: eggCount * 5,
+        fiber_g: 0,
+        category: 'High Protein Eggs',
+        selected: true,
+      });
+
+      totalCals += eggCount * 75;
+      totalProt += eggCount * 6.5;
+      totalCarbs += eggCount * 0.5;
+      totalFat += eggCount * 5;
+      totalFiber += 0;
+      totalGrams += eggCount * 50;
     }
 
     if (components.length > 0) {

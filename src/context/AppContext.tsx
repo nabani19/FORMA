@@ -145,8 +145,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mealLogs, setMealLogs] = useState<MealLog[]>(() => {
     try {
       const saved = localStorage.getItem('ai_nutrition_meal_logs');
-      const initialLogs = saved ? JSON.parse(saved) : INITIAL_MEAL_LOGS;
-      const logsArray = Array.isArray(initialLogs) ? initialLogs : INITIAL_MEAL_LOGS;
+      const initialLogs = saved ? JSON.parse(saved) : [];
+      const logsArray = Array.isArray(initialLogs) ? initialLogs : [];
       
       // SANITIZE ALL LOADED MEAL LOGS SO LEGACY DECIMALS IN LOCALSTORAGE ARE CONVERTED TO CLEAN INTEGERS!
       return logsArray.map((log: any) => ({
@@ -166,7 +166,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
     } catch (e) {
       console.warn('Failed to parse saved meal logs:', e);
-      return INITIAL_MEAL_LOGS;
+      return [];
     }
   });
 
@@ -760,7 +760,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const resetAllData = () => {
     setUser(INITIAL_USER);
     setPreferences(INITIAL_PREFERENCES);
-    setMealLogs(INITIAL_MEAL_LOGS);
+    setMealLogs([]);
     setEatenMeals({});
     try {
       localStorage.removeItem('ai_nutrition_user');

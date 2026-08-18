@@ -56,25 +56,18 @@ export interface AiModelOption {
 
 export const TOP_AI_MODELS: AiModelOption[] = [
   {
-    id: 'google/gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
+    id: 'google/gemini-3.7-flash',
+    name: 'Gemini 3.7 Flash',
     provider: 'Google DeepMind',
     badge: 'Lightning Fast',
-    description: 'Ultra-low latency, multimodal precision, and state-of-the-art clinical reasoning.',
+    description: 'Multimodal vision precision, instantaneous OCR, and clinical nutritional reasoning.',
   },
   {
-    id: 'deepseek/deepseek-chat',
-    name: 'DeepSeek V3',
-    provider: 'DeepSeek AI',
-    badge: 'Frontier SOTA',
-    description: 'Exceptional nutritional analysis, mathematical macro precision, and deep metabolic logic.',
-  },
-  {
-    id: 'deepseek/deepseek-r1',
-    name: 'DeepSeek R1',
-    provider: 'DeepSeek AI',
-    badge: 'Deep Reasoning',
-    description: 'Chain-of-thought clinical diagnosis and metabolic biomechanics optimization.',
+    id: 'google/gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite',
+    provider: 'Google',
+    badge: 'Ultra Fast',
+    description: 'High throughput, responsive conversational meal planning and fast vision parsing.',
   },
   {
     id: 'openai/gpt-4o-mini',
@@ -84,11 +77,11 @@ export const TOP_AI_MODELS: AiModelOption[] = [
     description: 'Lightweight, rapid conversational assistant for instant recipe substitutions.',
   },
   {
-    id: 'meta-llama/llama-3.3-70b-instruct',
-    name: 'Llama 3.3 70B',
-    provider: 'Meta AI',
-    badge: 'Open Weight Leader',
-    description: 'High-throughput open model fine-tuned for exercise kinesiology and meal planning.',
+    id: 'deepseek/deepseek-chat',
+    name: 'DeepSeek V3',
+    provider: 'DeepSeek AI',
+    badge: 'Frontier SOTA',
+    description: 'Exceptional nutritional analysis, mathematical macro precision, and deep metabolic logic.',
   },
   {
     id: 'anthropic/claude-3.5-sonnet',
@@ -113,7 +106,7 @@ export async function askAiCoach(
     monthlyBudgetInr?: number;
     supplementBudgetInr?: number;
   },
-  modelId: string = 'google/gemini-2.5-flash'
+  modelId: string = 'google/gemini-3.7-flash'
 ): Promise<string> {
   const mealBudget = userContext?.monthlyBudgetInr || 6000;
   const suppBudget = userContext?.supplementBudgetInr || 2400;

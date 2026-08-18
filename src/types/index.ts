@@ -74,6 +74,20 @@ export interface NutritionalInfo {
   minerals: Minerals;
 }
 
+export interface PlateComponent {
+  id: string;
+  name: string;
+  hindiName?: string;
+  portionGrams: number;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g: number;
+  category?: string;
+  selected?: boolean;
+}
+
 export interface FoodItem {
   _id: string;
   name: string;
@@ -89,6 +103,9 @@ export interface FoodItem {
   dietaryTags: string[];
   source: string;
   confidenceScore?: number;
+  isDecomposedPlate?: boolean;
+  decomposedComponents?: PlateComponent[];
+  ocrRawText?: string;
   lastUpdated: string;
 }
 

@@ -6,13 +6,20 @@ import { TOTAL_EXERCISES_INDEXED, MUSCLE_HIERARCHY, FEATURED_EXERCISES } from '.
 import { TRANSLATIONS, SUPPORTED_LANGUAGES, getTranslation } from '../utils/i18n';
 import { runOwaspSecurityAudit, getSecurityHeaders } from '../utils/securityEngine';
 import { getProductionClusterTelemetry, checkLivenessProbe } from '../utils/k8sHealth';
+import { 
+  semanticFoodFallback, 
+  lookupBarcodeProduct, 
+  parseAndSanitizeAiFoodResponse, 
+  convertVisualPortionToGrams, 
+  VISUAL_PORTION_GUIDES 
+} from '../utils/aiVisionService';
 
 let passed = 0;
 let failed = 0;
 
-function runTest(name: string, fn: () => void) {
+async function runTest(name: string, fn: () => Promise<void> | void) {
   try {
-    fn();
+    await fn();
     console.log(`  ✓ PASSED: ${name}`);
     passed++;
   } catch (err: any) {
@@ -33,11 +40,11 @@ function calculateHealthScore(report: BloodReport): number {
   return Math.max(0, score);
 }
 
-function runAllTRACkerTests() {
+async function runAllTRACkerTests() {
   console.log('\n🥑 Starting FitForge AI Automated Clinical & Architectural Verification Suite...\n');
 
   // Test 1: WHO / FAO / UNU 2004 Energy Equations
-  runTest('WHO/FAO/UNU 2004 BMR equations produce clinical precision energy targets', () => {
+  await runTest('WHO/FAO/UNU 2004 BMR equations produce clinical precision energy targets', () => {
     const bmrMale = calculateWhoBmr(70, 25, 'male');
     // 15.057 * 70 + 692.2 = 1746.19 -> 1746
     assert.strictEqual(bmrMale, 1746);
@@ -61,7 +68,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 2: Full 22 Dietary Regimes & 18 Food Allergens Matrix
-  runTest('Expanded Dietary Regimes (22) and Allergen Safeguards (18) are properly indexed', () => {
+  await runTest('Expanded Dietary Regimes (22) and Allergen Safeguards (18) are properly indexed', () => {
     assert.ok(ALL_DIETARY_REGIMES.length >= 22, 'Must contain at least 22 recognized dietary regimes');
     assert.ok(ALL_FOOD_ALLERGENS.length >= 18, 'Must contain at least 18 allergen safeguard profiles');
 
@@ -73,7 +80,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 3: 5-Meals a Day and Monthly Budget System
-  runTest('5-Meals a day structure supports daily and monthly budget allocations', () => {
+  await runTest('5-Meals a day structure supports daily and monthly budget allocations', () => {
     const userBudgetMonthly = 6000;
     const dailyTarget = Math.round(userBudgetMonthly / 30);
     assert.strictEqual(dailyTarget, 200);
@@ -92,7 +99,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 4: 1,000+ Head-to-Toe Exercises & 24+ Anatomical Muscle Hierarchy
-  runTest('1,000+ Head-to-toe exercise database indexes all anatomical muscle regions', () => {
+  await runTest('1,000+ Head-to-toe exercise database indexes all anatomical muscle regions', () => {
     assert.ok(TOTAL_EXERCISES_INDEXED >= 1000, `Must index at least 1,000 exercises (actual: ${TOTAL_EXERCISES_INDEXED})`);
     assert.ok(MUSCLE_HIERARCHY.length >= 24, `Must index at least 24 muscle groups (actual: ${MUSCLE_HIERARCHY.length})`);
     assert.ok(FEATURED_EXERCISES.length >= 8);
@@ -104,7 +111,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 5: Medical Lab Risk Analyzer (ISO 15189 & ADA 2026)
-  runTest('Medical Report Risk Score penalizes ADA Pre-Diabetes and Vitamin D deficiencies', () => {
+  await runTest('Medical Report Risk Score penalizes ADA Pre-Diabetes and Vitamin D deficiencies', () => {
     const mockReport: BloodReport = {
       id: 'b1',
       date: '2026-08-01',
@@ -127,7 +134,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 6: Phase 21 & 23 Brzycki 1RM and Progressive Overload Logic
-  runTest('Brzycki 1RM formula and Progressive Overload RPE < 7 threshold calculate correctly', () => {
+  await runTest('Brzycki 1RM formula and Progressive Overload RPE < 7 threshold calculate correctly', () => {
     // Brzycki: 80 * (36 / (37 - 10)) = 80 * (36 / 27) = 106.66 -> 107
     const oneRm = Math.round(80 * (36 / (37 - 10)));
     assert.strictEqual(oneRm, 107);
@@ -139,7 +146,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 7: Phase 27 Multi-Language Localization Engine (en, hi, es, fr, de)
-  runTest('Multi-Language Localization dictionaries provide full coverage across 5 languages', () => {
+  await runTest('Multi-Language Localization dictionaries provide full coverage across 5 languages', () => {
     assert.strictEqual(SUPPORTED_LANGUAGES.length, 5);
     
     const requiredKeys = ['app_title', 'dashboard', 'food_scanner', 'workout_plan', 'calories', 'protein'];
@@ -152,7 +159,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 8: Phase 29 & 30 OWASP Security Audit and Kubernetes Telemetry
-  runTest('OWASP Top 10 Security Audit returns 100/100 and K8s telemetry reports 99.99% uptime', () => {
+  await runTest('OWASP Top 10 Security Audit returns 100/100 and K8s telemetry reports 99.99% uptime', () => {
     const audit = runOwaspSecurityAudit();
     assert.strictEqual(audit.overallScore, 100);
     assert.strictEqual(audit.vulnerabilitiesDetected, 0);
@@ -168,7 +175,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 9: Aesthetic Physique Adonis Golden Ratio (1.618) & Input Boundaries
-  runTest('Adonis Index Golden Ratio (1.618) computes correctly with strict boundary validation', () => {
+  await runTest('Adonis Index Golden Ratio (1.618) computes correctly with strict boundary validation', () => {
     const calcAdonisRatio = (shoulders: number, waist: number): { ratio: number; status: string } => {
       assert.ok(shoulders > 0 && shoulders <= 100, 'Shoulders must be between 1 and 100 inches');
       assert.ok(waist > 0 && waist <= 100, 'Waist must be between 1 and 100 inches');
@@ -193,7 +200,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 10: 6-Tier Biomechanics Hierarchy & Aesthetic Routine Generation
-  runTest('6-Tier Biomechanics Hierarchy prioritizes Lateral Delts, Lats, and Anti-Waist Widening', () => {
+  await runTest('6-Tier Biomechanics Hierarchy prioritizes Lateral Delts, Lats, and Anti-Waist Widening', () => {
     const tiers = [
       { tier: 1, name: 'Lateral Deltoids — The Width Anchor', priority: 1 },
       { tier: 2, name: 'Lats — The Taper Driver', priority: 2 },
@@ -209,7 +216,7 @@ function runAllTRACkerTests() {
   });
 
   // Test 11: Aesthetic 2.5%-5% Progressive Overload Auto-Regulation
-  runTest('Aesthetic Overload engine computes 2.5% to 5% micro-progression on submaximal RPE', () => {
+  await runTest('Aesthetic Overload engine computes 2.5% to 5% micro-progression on submaximal RPE', () => {
     const computeAestheticOverload = (currentWeightKg: number, repsDone: number, rpe: number) => {
       const isTriggered = repsDone >= 12 && rpe <= 8.0;
       if (!isTriggered) return currentWeightKg;
@@ -230,6 +237,96 @@ function runAllTRACkerTests() {
     assert.strictEqual(maintainLoad, 30);
   });
 
+  // Test 12: Multimodal AI Vision Food Recognition & ICMR-NIN/USDA Nutrition Standards
+  await runTest('AI Vision Scanner semantic food fallback accurately matches dishes and calculates ICMR-NIN / USDA nutrition', () => {
+    const dish = semanticFoodFallback('Paneer Tikka', 'Indian');
+    assert.ok(dish, 'Should return a valid FoodItem');
+    assert.ok(dish.name.toLowerCase().includes('paneer'), `Name should match paneer (got: ${dish.name})`);
+    assert.ok(dish.nutritionalInfo.protein_g > 0, 'Protein must be positive');
+    assert.ok(dish.nutritionalInfo.calories > 0, 'Calories must be positive');
+    assert.ok(dish.servingSizeGrams > 0, 'Serving size must be positive');
+    assert.ok(dish.confidenceScore && dish.confidenceScore >= 0.85, 'Confidence score should be >= 0.85');
+  });
+
+  // Test 13: Local Barcode Lookup Verification
+  await runTest('Barcode scanner verifies catalog barcodes with high confidence score', async () => {
+    const verifiedItem = await lookupBarcodeProduct('8901234567011');
+    assert.ok(verifiedItem, 'Sample barcode should resolve to a valid FoodItem');
+    assert.strictEqual(verifiedItem.confidenceScore, 0.99);
+    assert.ok(verifiedItem.nutritionalInfo.calories > 0);
+  });
+
+  // Test 14: Multi-Item Plate Decomposition & Component Portion Aggregation
+  await runTest('Composite plate meals correctly decompose into individual items with proportional macros', () => {
+    const composite = semanticFoodFallback('2 Rotis with Dal Tadka and Rice', 'Indian');
+    assert.ok(composite, 'Should return a composite FoodItem');
+    assert.strictEqual(composite.isDecomposedPlate, true, 'isDecomposedPlate should be true');
+    assert.ok(composite.decomposedComponents && composite.decomposedComponents.length >= 3, 'Should contain at least 3 decomposed items (Roti, Dal, Rice)');
+    
+    // Sum of components
+    const sumCals = composite.decomposedComponents.reduce((acc, c) => acc + c.calories, 0);
+    assert.strictEqual(sumCals, composite.nutritionalInfo.calories, 'Total calories should equal sum of decomposed component calories');
+    assert.ok(composite.decomposedComponents.some(c => c.name.toLowerCase().includes('roti')));
+    assert.ok(composite.decomposedComponents.some(c => c.name.toLowerCase().includes('dal')));
+    assert.ok(composite.decomposedComponents.some(c => c.name.toLowerCase().includes('rice')));
+  });
+
+  // Test 15: Nutrition Label OCR Scanner Response Sanitization
+  await runTest('Nutrition Label OCR parser sanitizes manufacturer label data into clinical FoodItem', () => {
+    const mockOcrJson = JSON.stringify({
+      name: 'High Protein Whey Isolate (Chocolate)',
+      servingSizeGrams: 30,
+      nutritionalInfo: {
+        calories: 120,
+        protein_g: 25,
+        carbs_g: 2,
+        netCarbs_g: 1,
+        fat_g: 1,
+        saturatedFat_g: 0.5,
+        fiber_g: 1,
+        sugar_g: 0,
+        sodium_mg: 140,
+        calcium_mg: 120
+      },
+      ingredients: ['Whey Protein Isolate', 'Cocoa Powder', 'Natural Flavors', 'Stevia Leaf Extract'],
+      allergens: ['Dairy'],
+      dietaryTags: ['High Protein', 'Keto Friendly', 'Sugar Free'],
+      confidenceScore: 0.98
+    });
+
+    const parsedOcr = parseAndSanitizeAiFoodResponse(mockOcrJson, undefined, 'nutrition_label_ocr');
+    assert.ok(parsedOcr, 'Should successfully parse OCR JSON');
+    assert.strictEqual(parsedOcr.name, 'High Protein Whey Isolate (Chocolate)');
+    assert.strictEqual(parsedOcr.nutritionalInfo.protein_g, 25);
+    assert.strictEqual(parsedOcr.nutritionalInfo.calories, 120);
+    assert.strictEqual(parsedOcr.source, 'Forma Nutrition Facts OCR');
+    assert.strictEqual(parsedOcr.allergens[0], 'Dairy');
+  });
+
+  // Test 16: Visual Hand-Measurement Portion Conversion Engine
+  await runTest('Visual Hand-Measurement portion guide accurately computes metric gram conversions', () => {
+    assert.strictEqual(Object.keys(VISUAL_PORTION_GUIDES).length, 8, 'Must index all 8 hand-measurement units');
+    
+    // 2 Fists = 300g
+    assert.strictEqual(convertVisualPortionToGrams('fist', 2), 300);
+    // 1 Palm = 100g
+    assert.strictEqual(convertVisualPortionToGrams('palm', 1), 100);
+    // 2 Thumbs = 30g
+    assert.strictEqual(convertVisualPortionToGrams('thumb', 2), 30);
+    // 1 Katori = 150g
+    assert.strictEqual(convertVisualPortionToGrams('katori', 1), 150);
+    // 3 Slices = 105g
+    assert.strictEqual(convertVisualPortionToGrams('slice', 3), 105);
+
+    // Verify all guides have descriptions and icons
+    for (const guide of Object.values(VISUAL_PORTION_GUIDES)) {
+      assert.ok(guide.label.length > 0);
+      assert.ok(guide.grams > 0);
+      assert.ok(guide.foodExamples.length > 0);
+      assert.ok(guide.icon.length > 0);
+    }
+  });
+
   console.log(`\n==================================================`);
   console.log(`TEST RESULTS: ${passed} Passed | ${failed} Failed`);
   console.log(`==================================================\n`);
@@ -239,4 +336,8 @@ function runAllTRACkerTests() {
   }
 }
 
-runAllTRACkerTests();
+runAllTRACkerTests().catch((err) => {
+  console.error('Test suite uncaught error:', err);
+  process.exit(1);
+});
+

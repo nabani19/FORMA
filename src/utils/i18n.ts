@@ -1,9 +1,9 @@
 /**
- * Phase 27: Multi-Language Localization Engine (i18n)
- * Supported: English (en), Hindi (hi), Spanish (es), French (fr), German (de)
+ * Multi-Language Localization Engine (i18n)
+ * Supported: English (en), Spanish (es), French (fr), German (de)
  */
 
-export type LanguageCode = 'en' | 'hi' | 'es' | 'fr' | 'de';
+export type LanguageCode = 'en' | 'es' | 'fr' | 'de';
 
 export interface LanguageOption {
   code: LanguageCode;
@@ -14,7 +14,6 @@ export interface LanguageOption {
 
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', label: 'English', nativeLabel: 'English (US)', flag: '🇺🇸' },
-  { code: 'hi', label: 'Hindi', nativeLabel: 'हिन्दी (IN)', flag: '🇮🇳' },
   { code: 'es', label: 'Spanish', nativeLabel: 'Español', flag: '🇪🇸' },
   { code: 'fr', label: 'French', nativeLabel: 'Français', flag: '🇫🇷' },
   { code: 'de', label: 'German', nativeLabel: 'Deutsch', flag: '🇩🇪' },
@@ -55,41 +54,6 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     voice_assistant: 'Voice Assistant',
     voice_listening: 'Listening... Say food name or navigation command',
     voice_prompt: 'Try saying "Log 200g Paneer Tikka" or "Go to Workouts"',
-  },
-  hi: {
-    app_title: 'फिटफोर्ज एआई (FitForge AI)',
-    app_tagline: 'डब्ल्यूएचओ और आईसीएमआर-एनआईएन क्लिनिकल पोषण सूट',
-    dashboard: 'डैशबोर्ड',
-    food_scanner: 'भोजन स्कैनर',
-    meal_logs: 'भोजन लॉग',
-    analytics: 'एनालिटिक्स',
-    ai_coach: 'एआई कोच',
-    medical_report: 'मेडिकल लैब',
-    workout_plan: 'वर्कआउट प्लान',
-    supplements: 'सप्लीमेंट्स',
-    grocery_planner: 'किराना योजनाकार',
-    profile: 'प्रोफ़ाइल व सेटिंग्स',
-    trainer_portal: 'ट्रेनर पोर्टल',
-    export_pdf: 'पीडीएफ रिपोर्ट डाउनलोड करें',
-    system_health: 'सिस्टम स्वास्थ्य व सुरक्षा',
-    daily_budget: 'दैनिक भोजन बजट',
-    spent_today: 'आज का खर्च',
-    remaining: 'शेष बजट',
-    calories: 'कैलोरी',
-    protein: 'प्रोटीन',
-    carbs: 'कार्ब्स',
-    fats: 'वसा (फैट)',
-    fiber: 'फाइबर',
-    scan_food: 'खाना स्कैन करें',
-    log_meal: 'खाना दर्ज करें',
-    streak: 'दैनिक स्ट्रीक',
-    streak_days: 'सक्रिय दिन',
-    level: 'स्तर',
-    xp: 'अंक (XP)',
-    offline_mode: 'ऑफ़लाइन मोड: इंटरनेट आने पर डेटा स्वतः सिंक हो जाएगा',
-    voice_assistant: 'वॉइस सहायक',
-    voice_listening: 'सुन रहे हैं... खाने का नाम बोलें...',
-    voice_prompt: '"२०० ग्राम पनीर टिक्का" या "वर्कआउट दिखाओ" बोलें',
   },
   es: {
     app_title: 'FitForge AI',

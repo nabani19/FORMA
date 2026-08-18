@@ -171,17 +171,12 @@ export const ScanResultCard: React.FC<ScanResultCardProps> = ({ foodItem, onLogg
           {foodItem.source}
         </div>
 
-        {/* Title & Hindi Translation */}
+        {/* Title & Category */}
         <div className="absolute bottom-3 left-3 right-3">
           <div className="flex items-center gap-2">
             <span className="text-[11px] uppercase tracking-wider font-bold text-emerald-400">
               {foodItem.category}
             </span>
-            {foodItem.hindiName && (
-              <span className="text-[11px] font-medium text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700">
-                {foodItem.hindiName}
-              </span>
-            )}
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100 font-heading leading-tight">
             {foodItem.name}
@@ -244,9 +239,6 @@ export const ScanResultCard: React.FC<ScanResultCardProps> = ({ foodItem, onLogg
                       <Square className="w-4 h-4 text-slate-500 shrink-0" />
                     )}
                     <span>{comp.name}</span>
-                    {comp.hindiName && (
-                      <span className="text-[10px] text-slate-400 font-normal">({comp.hindiName})</span>
-                    )}
                   </button>
 
                   <span className="text-xs font-mono font-bold text-amber-400">

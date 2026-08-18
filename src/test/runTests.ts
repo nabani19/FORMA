@@ -145,12 +145,12 @@ async function runAllTRACkerTests() {
     assert.strictEqual(triggersOverload, true, 'Submaximal set (RPE 6.5) should trigger +2.5kg overload recommendation');
   });
 
-  // Test 7: Phase 27 Multi-Language Localization Engine (en, hi, es, fr, de)
-  await runTest('Multi-Language Localization dictionaries provide full coverage across 5 languages', () => {
-    assert.strictEqual(SUPPORTED_LANGUAGES.length, 5);
+  // Test 7: Multi-Language Localization Engine (en, es, fr, de)
+  await runTest('Multi-Language Localization dictionaries provide full coverage across international languages', () => {
+    assert.strictEqual(SUPPORTED_LANGUAGES.length, 4);
     
     const requiredKeys = ['app_title', 'dashboard', 'food_scanner', 'workout_plan', 'calories', 'protein'];
-    for (const lang of ['en', 'hi', 'es', 'fr', 'de'] as const) {
+    for (const lang of ['en', 'es', 'fr', 'de'] as const) {
       for (const key of requiredKeys) {
         const val = getTranslation(lang, key);
         assert.ok(val && val.length > 0, `Missing translation for key "${key}" in language "${lang}"`);
@@ -334,7 +334,6 @@ async function runAllTRACkerTests() {
 {
   "_id": "scan_paneer_tikka_01",
   "name": "Tandoori Paneer Tikka",
-  "hindiName": "पनीर टिक्का",
   "category": "High Protein Starter",
   "cuisine": "Indian",
   "servingSizeGrams": 200,

@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.lang = language === 'hi' ? 'hi-IN' : language === 'es' ? 'es-ES' : 'en-US';
+      recognition.lang = language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : language === 'de' ? 'de-DE' : 'en-US';
       recognition.continuous = false;
       recognition.interimResults = false;
 

@@ -134,11 +134,11 @@ Strictly adhere to USDA FoodData Central and ICMR-NIN (National Institute of Nut
 CRITICAL INSTRUCTIONS:
 1. Return ONLY valid, raw JSON (no markdown formatting, no code blocks, no backticks).
 2. If the plate contains multiple separate items (e.g. "Dal + 2 Rotis + Rice + Salad" or "Chicken + Broccoli + Sweet Potato"), decompose them into the "decomposedComponents" array!
-3. Adhere strictly to the following JSON structure:
+3. Always output all dish names, component names, and descriptions in pure English. Do NOT include Hindi or Devanagari script.
+4. Adhere strictly to the following JSON structure:
 {
   "_id": "scan_ai_unique_id",
   "name": "Exact dish name (e.g. Paneer Butter Masala with 2 Rotis)",
-  "hindiName": "Hindi/Devanagari name if Indian dish, or localized name",
   "category": "Main Course / Salad / Breakfast / Snack / Beverage / Protein Bowl / Mixed Plate",
   "cuisine": "Indian" | "Asian" | "American" | "Mediterranean" | "Mexican" | "Global",
   "servingSizeGrams": number (realistic weight in grams for the entire portion shown/described),
@@ -147,7 +147,6 @@ CRITICAL INSTRUCTIONS:
     {
       "id": "comp_1",
       "name": "Component Name (e.g. Tawa Roti)",
-      "hindiName": "रोटी",
       "portionGrams": 70,
       "calories": 160,
       "protein_g": 6.0,
@@ -351,7 +350,6 @@ export function parseAndSanitizeAiFoodResponse(
       decomposedComponents = data.decomposedComponents.map((comp: any, idx: number) => ({
         id: comp.id || `comp_${Date.now()}_${idx}`,
         name: stripHtml(String(comp.name || `Component ${idx + 1}`)),
-        hindiName: comp.hindiName ? stripHtml(String(comp.hindiName)) : undefined,
         portionGrams: Number(comp.portionGrams) || Math.round(serving / data.decomposedComponents.length),
         calories: Number(comp.calories) || Math.round(cals / data.decomposedComponents.length),
         protein_g: Number(comp.protein_g) || 0,
@@ -368,7 +366,6 @@ export function parseAndSanitizeAiFoodResponse(
     const foodItem: FoodItem = {
       _id: `scan_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       name: stripHtml(data.name),
-      hindiName: data.hindiName ? stripHtml(data.hindiName) : undefined,
       category: stripHtml(data.category || (isDecomposed ? 'Composite Meal' : 'Main Course')),
       cuisine: sanitizeCuisine(data.cuisine),
       imageUrl: imageSrc || getFallbackDishImage(data.name, data.cuisine),
@@ -564,7 +561,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_roti_${Date.now()}`,
         name: `${count} Whole Wheat Tawa Roti`,
-        hindiName: `${count} तवा रोटी`,
         portionGrams: compWeight,
         calories: compCals,
         protein_g: compProt,
@@ -641,7 +637,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_rice_${Date.now()}`,
         name: 'Steamed Basmati Rice (1 Cup)',
-        hindiName: 'चावल',
         portionGrams: 150,
         calories: 195,
         protein_g: 4,
@@ -690,7 +685,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_south_${Date.now()}`,
         name: isDosa ? 'Crisp Masala Dosa (1 Large)' : 'Steamed Rice Idli (2 Pcs)',
-        hindiName: isDosa ? 'मसाला डोसा' : 'इडली',
         portionGrams: isDosa ? 180 : 120,
         calories: isDosa ? 280 : 130,
         protein_g: isDosa ? 6 : 4,
@@ -703,7 +697,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_sambar_${Date.now()}`,
         name: 'Vegetable Lentil Sambar (1 Bowl)',
-        hindiName: 'सांभर',
         portionGrams: 150,
         calories: 95,
         protein_g: 4.5,
@@ -716,7 +709,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_chutney_${Date.now()}`,
         name: 'Fresh Coconut Chutney (2 Tbsp)',
-        hindiName: 'नारियल चटनी',
         portionGrams: 30,
         calories: 75,
         protein_g: 1,
@@ -740,7 +732,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_oats_${Date.now()}`,
         name: 'Rolled Oats Porridge with Almond Milk',
-        hindiName: 'ओट्स',
         portionGrams: 200,
         calories: 220,
         protein_g: 7,
@@ -778,7 +769,6 @@ export function semanticFoodFallback(
       components.push({
         id: `comp_eggs_${Date.now()}`,
         name: `${eggCount} Whole Farm Boiled / Scrambled Eggs`,
-        hindiName: `${eggCount} उबले अंडे`,
         portionGrams: eggCount * 50,
         calories: eggCount * 75,
         protein_g: eggCount * 6.5,
@@ -835,9 +825,8 @@ export function semanticFoodFallback(
   // Try exact or partial matches in the mock food database
   const matches = INITIAL_FOOD_DATABASE.filter((item) => {
     const nameMatch = item.name.toLowerCase().includes(q) || q.includes(item.name.toLowerCase());
-    const hindiMatch = item.hindiName && (item.hindiName.includes(q) || q.includes(item.hindiName));
     const ingMatch = item.ingredients.some((ing) => q.includes(ing.toLowerCase()));
-    return nameMatch || hindiMatch || ingMatch;
+    return nameMatch || ingMatch;
   });
 
   if (matches.length > 0) {

@@ -77,7 +77,6 @@ export interface NutritionalInfo {
 export interface PlateComponent {
   id: string;
   name: string;
-  hindiName?: string;
   portionGrams: number;
   calories: number;
   protein_g: number;
@@ -91,7 +90,6 @@ export interface PlateComponent {
 export interface FoodItem {
   _id: string;
   name: string;
-  hindiName?: string;
   barcode?: string;
   imageUrl: string;
   category: string;

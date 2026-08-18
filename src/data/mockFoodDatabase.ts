@@ -5,7 +5,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_001',
     name: 'Butter Chicken (Murgh Makhani) with Garlic Naan',
-    hindiName: 'बटर चिकन और लच्छा लहसुन नान',
     barcode: '8901234567011',
     imageUrl: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=800&q=80',
     category: 'Dinner',
@@ -63,7 +62,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_002',
     name: 'Paneer Tikka Masala with Basmati Rice',
-    hindiName: 'पनीर टिक्का मसाला और बासमती चावल',
     barcode: '8901234567028',
     imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -119,7 +117,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_003',
     name: 'Masala Dosa with Sambhar & Coconut Chutney',
-    hindiName: 'मसाला डोसा, सांभर और नारियल चटनी',
     barcode: '8901234567035',
     imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast / Dinner',
@@ -174,7 +171,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_004',
     name: 'Palak Paneer with Whole Wheat Chapati',
-    hindiName: 'पालक पनीर और गेहूं की चपाती',
     barcode: '8901234567042',
     imageUrl: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -229,7 +225,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_005',
     name: 'Chole Bhature (Punjabi Spiced Chickpeas)',
-    hindiName: 'अमृतसरी छोले भटूरे',
     barcode: '8901234567059',
     imageUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch',
@@ -283,7 +278,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_006',
     name: 'Dal Tadka with Jeera Rice',
-    hindiName: 'दाल तड़का और जीरा राइस',
     barcode: '8901234567066',
     imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -337,7 +331,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_007',
     name: 'Hyderabadi Chicken Dum Biryani',
-    hindiName: 'हैदराबादी चिकन दम बिरयानी',
     barcode: '8901234567073',
     imageUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -392,7 +385,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_008',
     name: 'Steamed Idli Sambhar with Coconut Chutney',
-    hindiName: 'स्टीम्ड इडली सांभर और नारियल चटनी',
     barcode: '8901234567080',
     imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast',
@@ -445,7 +437,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_009',
     name: 'Vegetable Korma with Roti',
-    hindiName: 'वेजीटेबल नवरत्न कोरमा और रोटी',
     barcode: '8901234567097',
     imageUrl: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=800&q=80',
     category: 'Dinner',
@@ -497,7 +488,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_010',
     name: 'Samosa with Mint & Tamarind Chutney (2 pcs)',
-    hindiName: 'पंजाबी आलू समोसा और हरी चटनी',
     barcode: '8901234567103',
     imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=80',
     category: 'Snack',
@@ -551,7 +541,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_011',
     name: 'Kanda Poha with Roasted Peanuts & Curry Leaves',
-    hindiName: 'कांदा पोहा और भुनी मूंगफली',
     barcode: '8901234567110',
     imageUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast',
@@ -584,7 +573,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_012',
     name: 'Vegetable Semolina Upma with Roasted Cashews',
-    hindiName: 'सब्जियों वाला रवा उपमा और काजू',
     barcode: '8901234567127',
     imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast',
@@ -617,7 +605,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_013',
     name: 'Gujarati Methi Thepla (3 pcs) with Fresh Curd',
-    hindiName: 'गुजराती मेथी थेपला और ताजा दही',
     barcode: '8901234567134',
     imageUrl: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast / Snack',
@@ -650,7 +637,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_014',
     name: 'Punjabi Aloo Paratha with Curd & Mint Chutney',
-    hindiName: 'पंजाबी आलू पराठा और दही',
     barcode: '8901234567141',
     imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast',
@@ -683,7 +669,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_015',
     name: 'Moong Dal Chilla (2 pcs) with Mint Chutney & Paneer',
-    hindiName: 'मूंग दाल चीला और पनीर स्टफिंग',
     barcode: '8901234567158',
     imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast',
@@ -716,7 +701,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_016',
     name: 'Homestyle Rajma Chawal (Kidney Beans with Jeera Rice)',
-    hindiName: 'घर का राजमा चावल',
     barcode: '8901234567165',
     imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch',
@@ -749,7 +733,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_017',
     name: 'Punjabi Chole Masala with 2 Whole Wheat Phulkas & Salad',
-    hindiName: 'छोले मसाला और २ गेहूं की फुल्का रोटी',
     barcode: '8901234567172',
     imageUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -782,7 +765,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_018',
     name: 'Yellow Moong Dal Tadka with 2 Ghee Phulkas & Salad',
-    hindiName: 'पीली मूंग दाल तड़का और घी लगी रोटी',
     barcode: '8901234567189',
     imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -815,7 +797,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_019',
     name: 'Aloo Bhindi Masala (Spiced Okra) with 2 Phulkas',
-    hindiName: 'आलू भिंडी मसाला और फुल्का',
     barcode: '8901234567196',
     imageUrl: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -848,7 +829,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_020',
     name: 'Baingan Bharta (Smoked Eggplant) with 2 Rotis',
-    hindiName: 'ढाबा स्टाइल बैंगन भर्ता और रोटी',
     barcode: '8901234567202',
     imageUrl: 'https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=80',
     category: 'Dinner',
@@ -881,7 +861,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_021',
     name: 'Kolkata Machher Jhol (Rohu Fish Curry with Steamed Rice)',
-    hindiName: 'बंगाली रोहू मछली झोल और भात',
     barcode: '8901234567219',
     imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -914,7 +893,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_022',
     name: 'Homestyle Tari Wali Egg Curry (2 Eggs) with Steamed Rice',
-    hindiName: 'तरी वाली अंडा करी और चावल',
     barcode: '8901234567226',
     imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -947,7 +925,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_023',
     name: 'Homestyle Tari Wala Chicken Curry with 2 Phulkas',
-    hindiName: 'घर का तरी वाला चिकन और रोटी',
     barcode: '8901234567233',
     imageUrl: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -980,7 +957,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_024',
     name: 'Gujarati Kadhi with Light Moong Dal Khichdi & Papad',
-    hindiName: 'खिचड़ी कढ़ी और भुना पापड़',
     barcode: '8901234567240',
     imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
     category: 'Dinner',
@@ -1013,7 +989,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_025',
     name: 'Lauki (Bottle Gourd) Chana Dal Sabzi with 2 Phulkas',
-    hindiName: 'लौकी चना दाल और फुल्का',
     barcode: '8901234567257',
     imageUrl: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -1046,7 +1021,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_026',
     name: 'Paneer Bhurji with 2 Whole Wheat Phulkas',
-    hindiName: 'पनीर भुर्जी और २ फुल्का रोटी',
     barcode: '8901234567264',
     imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',
@@ -1079,7 +1053,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_027',
     name: 'High-Protein Sattu Drink (Bihar/UP Chana Sattu)',
-    hindiName: 'देसी चना सत्तू शरबत (नमकीन)',
     barcode: '8901234567271',
     imageUrl: 'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=800&q=80',
     category: 'Snack',
@@ -1112,7 +1085,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_028',
     name: 'Masala Chaas (Spiced Buttermilk with Jeera & Mint)',
-    hindiName: 'मसाला छाछ और भुना जीरा',
     barcode: '8901234567288',
     imageUrl: 'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=800&q=80',
     category: 'Snack',
@@ -1145,7 +1117,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_029',
     name: 'Roasted Masala Makhana (Foxnuts with Ghee & Rock Salt)',
-    hindiName: 'देसी घी में भुना मसाला मखाना',
     barcode: '8901234567295',
     imageUrl: 'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=800&q=80',
     category: 'Snack',
@@ -1178,7 +1149,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_030',
     name: 'Sprouted Moong & Kala Chana Chaat with Lemon',
-    hindiName: 'अंकुरित मूंग और चना चाट',
     barcode: '8901234567301',
     imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
     category: 'Breakfast / Snack',
@@ -1211,7 +1181,6 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   {
     _id: 'ind_031',
     name: 'South Indian Curd Rice (Thayir Sadam) with Mustard Tadka',
-    hindiName: 'दही भात (तड़का दही चावल)',
     barcode: '8901234567318',
     imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80',
     category: 'Lunch / Dinner',

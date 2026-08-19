@@ -108,29 +108,108 @@ export function redactSensitiveData(data: Record<string, any>): Record<string, a
 
 /**
  * 5. OWASP Security Audit Verification
+ * Performs real runtime checks — not hardcoded scores.
+ * Each check tests an actual observable property of the application.
  */
 export function runOwaspSecurityAudit() {
-  const checks = [
-    { name: 'OWASP A01: Broken Access Control', status: 'PASS', score: 100 },
-    { name: 'OWASP A02: Cryptographic Failures (Argon2id & HSTS)', status: 'PASS', score: 100 },
-    { name: 'OWASP A03: Injection (Sanitization & Parameterization)', status: 'PASS', score: 100 },
-    { name: 'OWASP A04: Insecure Design (Rate Limits & CSP)', status: 'PASS', score: 100 },
-    { name: 'OWASP A05: Security Misconfiguration (Headers Hardened)', status: 'PASS', score: 100 },
-    { name: 'OWASP A07: Identification & Auth Failures (httpOnly Cookies)', status: 'PASS', score: 100 },
-    { name: 'OWASP A08: Software & Data Integrity (Signed JWT)', status: 'PASS', score: 100 },
-  ];
+  const checks: { name: string; status: string; score: number; detail: string }[] = [];
 
-  const overallScore = Math.round(
-    checks.reduce((acc, c) => acc + c.score, 0) / checks.length
+  // A01: Broken Access Control — verify no admin/debug routes exposed in window
+  const isBrowser = typeof window !== 'undefined';
+  const a01Pass = !isBrowser || (
+    typeof (window as any).__ADMIN_BACKDOOR__ === 'undefined' &&
+    typeof (window as any).__DEBUG_MODE__ === 'undefined'
   );
+  checks.push({
+    name: 'OWASP A01: Broken Access Control',
+    status: a01Pass ? 'PASS' : 'FAIL',
+    score: a01Pass ? 100 : 0,
+    detail: a01Pass ? 'No debug/admin globals exposed on window' : 'Admin backdoor detected on window object',
+  });
+
+  // A02: Cryptographic Failures — verify HTTPS or localhost dev
+  const hasLocation = typeof location !== 'undefined';
+  const a02Pass = !hasLocation || (
+    location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  );
+  checks.push({
+    name: 'OWASP A02: Cryptographic Failures (HTTPS enforcement)',
+    status: a02Pass ? 'PASS' : 'FAIL',
+    score: a02Pass ? 100 : 0,
+    detail: hasLocation ? `Transport: ${location.protocol}//${location.hostname}` : 'Secure Node/SSR execution context',
+  });
+
+  // A03: Injection — verify sanitizeInput and stripHtml are functional
+  const testPayload = '<script>alert(1)</script>';
+  const sanitized = sanitizeInput(testPayload);
+  const stripped = stripHtml(testPayload);
+  const a03Pass = !sanitized.includes('<script>') && !stripped.includes('<script>');
+  checks.push({
+    name: 'OWASP A03: Injection (XSS Sanitization functional)',
+    status: a03Pass ? 'PASS' : 'FAIL',
+    score: a03Pass ? 100 : 0,
+    detail: a03Pass ? 'sanitizeInput and stripHtml correctly neutralize script injection' : 'XSS sanitizer is broken',
+  });
+
+  // A04: Insecure Design — verify rate limiter rejects after threshold
+  const rlId = `owasp_audit_test_${Date.now()}`;
+  checkRateLimit(rlId, 1, 60000);
+  const rlResult = checkRateLimit(rlId, 1, 60000);
+  const a04Pass = !rlResult.allowed;
+  checks.push({
+    name: 'OWASP A04: Insecure Design (Rate Limiting functional)',
+    status: a04Pass ? 'PASS' : 'FAIL',
+    score: a04Pass ? 100 : 0,
+    detail: a04Pass ? 'Rate limiter correctly blocks requests exceeding threshold' : 'Rate limiter not enforcing limits',
+  });
+
+  // A05: Security Misconfiguration — verify security headers object is non-empty
+  const headers = getSecurityHeaders();
+  const a05Pass = Object.keys(headers).length >= 5 &&
+                  Boolean(headers['Content-Security-Policy']) &&
+                  Boolean(headers['Strict-Transport-Security']);
+  checks.push({
+    name: 'OWASP A05: Security Misconfiguration (HTTP Headers)',
+    status: a05Pass ? 'PASS' : 'FAIL',
+    score: a05Pass ? 100 : 0,
+    detail: a05Pass ? `${Object.keys(headers).length} security headers configured including CSP and HSTS` : 'Missing critical security headers',
+  });
+
+  // A07: Authentication Failures — verify no API keys are exposed in window or globalThis
+  const a07Pass = !isBrowser || (
+    typeof (window as any).OPENROUTER_KEY === 'undefined' &&
+    typeof (window as any).__API_KEY__ === 'undefined'
+  );
+  checks.push({
+    name: 'OWASP A07: Identification & Auth Failures (No API key leakage)',
+    status: a07Pass ? 'PASS' : 'FAIL',
+    score: a07Pass ? 100 : 0,
+    detail: a07Pass ? 'No API keys exposed on window object' : 'API key found on global window — critical leak',
+  });
+
+  // A08: Software & Data Integrity — verify redactSensitiveData masks secrets
+  const testData = { password: 'hunter2', apiKey: 'sk-test-123', username: 'forma' };
+  const redacted = redactSensitiveData(testData);
+  const a08Pass = redacted.password === '[REDACTED]' && redacted.apiKey === '[REDACTED]' && redacted.username === 'forma';
+  checks.push({
+    name: 'OWASP A08: Software & Data Integrity (Sensitive Data Redaction)',
+    status: a08Pass ? 'PASS' : 'FAIL',
+    score: a08Pass ? 100 : 0,
+    detail: a08Pass ? 'Sensitive data fields are correctly redacted before any logging' : 'Sensitive data redaction is broken',
+  });
+
+  const failedChecks = checks.filter(c => c.status === 'FAIL');
+  const overallScore = Math.round(checks.reduce((acc, c) => acc + c.score, 0) / checks.length);
 
   return {
     timestamp: new Date().toISOString(),
     overallScore,
-    status: 'SECURE',
-    checksPassed: checks.length,
+    status: failedChecks.length === 0 ? 'SECURE' : 'VULNERABLE',
+    checksPassed: checks.filter(c => c.status === 'PASS').length,
     totalChecks: checks.length,
-    vulnerabilitiesDetected: 0,
+    vulnerabilitiesDetected: failedChecks.length,
     checks,
+    failedChecks: failedChecks.map(c => c.name),
   };
 }
+

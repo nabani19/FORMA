@@ -5,18 +5,12 @@
 
 import { stripHtml } from './securityEngine';
 
-// Default configuration with safe dynamic resolution
-const getFallbackKey = (): string => {
-  try {
-    // Decode base64 default runtime token
-    const encoded = 'c2stb3ItdjEtMWZkYzc3NjJmMTFjZDA0YjBjMzYxMDg5YmQzMTg2OTM3OWJlMjAyNzljMDk0ZWM0NDc2Mzg4NDg0ZTViNzIzMw==';
-    if (typeof atob === 'function') {
-      return atob(encoded);
-    }
-  } catch {}
-  return '';
-};
-
+/**
+ * Returns the active OpenRouter API key.
+ * Priority: 1) User-supplied key stored in localStorage, 2) VITE_OPENROUTER_API_KEY env var.
+ * SECURITY: No fallback hardcoded key. If neither source provides a key, the scanner
+ * gracefully degrades to the offline food database. The key is the user's own credential.
+ */
 export const getActiveOpenRouterKey = (): string => {
   try {
     const userCustomKey = localStorage.getItem('ai_custom_openrouter_key');
@@ -24,7 +18,8 @@ export const getActiveOpenRouterKey = (): string => {
       return userCustomKey.trim();
     }
   } catch {}
-  return (import.meta as any).env?.VITE_OPENROUTER_API_KEY || getFallbackKey();
+  // VITE_ prefix exposes this to the client bundle — only use for non-sensitive public keys
+  return (import.meta as any).env?.VITE_OPENROUTER_API_KEY || '';
 };
 
 export const setCustomOpenRouterKey = (key: string): void => {

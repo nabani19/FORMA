@@ -36,7 +36,7 @@ test.describe('CUJ-11: Android Mobile UX & Touch Navigation', () => {
 
     const scannerModal = authenticatedPage.getByTestId('scanner-modal');
     await expect(scannerModal).toBeVisible();
-    await expect(authenticatedPage.locator('text=Snap / Upload from Phone')).toBeVisible();
+    await expect(authenticatedPage.getByText('AI Food & Vision Intelligence')).toBeVisible();
 
     // 6. Close scanner modal
     await authenticatedPage.getByTestId('btn-close-scanner').click();

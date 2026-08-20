@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { User, DietaryPreference, Gender, ActivityLevel, HealthGoal } from '../types';
-import { ArrowRight, Check, ShieldAlert, Sparkles, Calculator, Target } from 'lucide-react';
+import { ArrowRight, Check, ShieldAlert, Sparkles, Calculator, Target, Lock } from 'lucide-react';
 import { ALL_DIETARY_REGIMES, ALL_FOOD_ALLERGENS } from '../data/mockFoodDatabase';
 import { calculateClinicalNutrition, CalculationFormula } from '../utils/whoFormulas';
 
@@ -92,39 +92,63 @@ export const OnboardingWizard: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+      <div className="w-full max-w-3xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden" style={{ backgroundColor: '#121A2B' }}>
         
         {/* Ambient glow */}
         <div className="absolute -top-20 -left-20 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-56 h-56 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Wizard Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0 mt-0.5">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-heading font-extrabold text-xl text-slate-100 flex items-center gap-2">
+                <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-slate-100 flex flex-wrap items-center gap-2">
                   Welcome to Forma
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono">
                     WHO 2024 • ICMR-NIN
                   </span>
-                </h2>
-                <p className="text-xs text-slate-400">Step {step} of 3 • Clinical Biometrics, Cultural Regimes & Budget</p>
+                </h1>
+
+                {/* Fix #1: Outcome-focused support text (16px / 24px line height, max-w 280px mobile / 520px desktop, color #B8C0D4 on #121A2B, CR >= 7:1) */}
+                <p
+                  className="mt-1.5 text-[16px] leading-[24px] max-w-[280px] md:max-w-[520px] font-normal"
+                  style={{ color: '#B8C0D4' }}
+                >
+                  Unlock your clinical metabolic plan, Adonis V-Taper targets, and personalized budget meal blueprint in under 60 seconds.
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Step {step} of 3 • Clinical Biometrics, Cultural Regimes & Budget</p>
               </div>
             </div>
-            <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 self-start sm:self-auto shrink-0">
               {step === 1 ? '1. Biometrics & Budget' : step === 2 ? '2. Regimes & Allergies' : '3. Clinical Targets'}
             </span>
           </div>
 
+          {/* Progress Bar */}
           <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
             <div
               className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500"
               style={{ width: `${(step / 3) * 100}%` }}
             />
+          </div>
+
+          {/* Fix #2: Trust & Reassurance Row (16px lock, 14px text, 16px below on desktop / 12px on mobile, fill #111827, border #2A3348, text #D7DDEA) */}
+          <div
+            className="mt-3 md:mt-4 px-3.5 py-2.5 rounded-xl flex items-center gap-2.5 text-[14px] leading-snug border transition-all"
+            style={{
+              backgroundColor: '#111827',
+              borderColor: '#2A3348',
+              color: '#D7DDEA',
+            }}
+          >
+            <Lock className="w-4 h-4 text-emerald-400 shrink-0" style={{ width: 16, height: 16 }} />
+            <span>
+              <strong className="font-semibold text-slate-100">Private & Secure:</strong> Your biometrics, health biomarkers, and budget remain encrypted locally and are never shared.
+            </span>
           </div>
         </div>
 

@@ -74,14 +74,15 @@ export function calculateHarrisBenedictBmr(weightKg: number, heightCm: number, a
 }
 
 /**
- * WHO / FAO Physical Activity Level (PAL) Multipliers
+ * Clinical Physical Activity Level (PAL) Multipliers
+ * Adheres to modern clinical dietetics (ACSM, ISSN & ADA standards for non-agricultural lifestyles)
  */
 export const WHO_PAL_MULTIPLIERS: Record<ActivityLevel, number> = {
-  sedentary: 1.4, // Light/seated work with little movement
-  lightly_active: 1.55, // Light exercise 1-3 days/week
-  moderately_active: 1.75, // Moderate exercise 3-5 days/week (WHO standard active)
-  very_active: 1.9, // Hard training 6-7 days/week
-  extra_active: 2.1, // Elite athlete / rigorous physical labor
+  sedentary: 1.2, // Seated desk work with little movement
+  lightly_active: 1.375, // Light exercise 1-3 days/week
+  moderately_active: 1.55, // Moderate gym training 3-5 days/week
+  very_active: 1.725, // Rigorous training 6-7 days/week
+  extra_active: 1.9, // Elite athlete / two-a-day rigorous training
 };
 
 /**

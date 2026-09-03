@@ -18,7 +18,7 @@ export const OnboardingWizard: React.FC = () => {
   const [age, setAge] = useState(26);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(user.activityLevel || 'moderately_active');
   const [healthGoal, setHealthGoal] = useState<HealthGoal>(user.healthGoal || 'muscle_gain');
-  const [formula, setFormula] = useState<CalculationFormula>('who_fao');
+  const [formula, setFormula] = useState<CalculationFormula>('mifflin_st_jeor');
   const [monthlyBudgetInr, setMonthlyBudgetInr] = useState(user.monthlyBudgetInr || 6000);
 
   // Comprehensive Dietary & Allergen List
@@ -417,8 +417,20 @@ export const OnboardingWizard: React.FC = () => {
 
             {/* Target Preview */}
             <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-                <span>Calculated Scientific Targets ({clinicalResults.formulaDescription}):</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-semibold text-slate-300">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span>Clinical Formula:</span>
+                  <select
+                    value={formula}
+                    onChange={(e) => setFormula(e.target.value as CalculationFormula)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-emerald-400 font-mono focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="mifflin_st_jeor">Mifflin-St Jeor (Clinical Gold Standard)</option>
+                    <option value="who_fao">WHO / FAO (Technical Report 935)</option>
+                    <option value="harris_benedict">Harris-Benedict Revised</option>
+                    <option value="katch_mcardle">Katch-McArdle (Lean Body Mass)</option>
+                  </select>
+                </div>
                 <span className="text-emerald-400 font-mono">{clinicalResults.proteinGramsPerKg} g/kg Protein</span>
               </div>
               <div className="grid grid-cols-4 gap-2 text-center">

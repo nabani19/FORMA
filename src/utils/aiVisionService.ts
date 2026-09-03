@@ -533,10 +533,10 @@ export function semanticFoodFallback(
 ): FoodItem {
   const q = query.toLowerCase().trim();
 
-  // Split into raw item parts if multi-item (separated by comma, semicolon, newline, plus, or ' and ')
+  // Split into raw item parts if multi-item (separated by comma, semicolon, newline, plus, 'with', or 'and')
   const isComposite = q.includes(',') || q.includes(';') || q.includes('\n') || q.includes('+') || q.includes(' with ') || q.includes(' and ');
   const rawParts = isComposite 
-    ? query.split(/[,;\n+]|\s+and\s+/).map(p => p.trim()).filter(Boolean)
+    ? query.split(/[,;\n+]|\s+and\s+|\s+with\s+/i).map(p => p.trim()).filter(Boolean)
     : [query.trim()];
 
   if (rawParts.length > 1 || isComposite) {

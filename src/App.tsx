@@ -19,6 +19,7 @@ import { ScannerModal } from './components/ScannerModal';
 import { SaaSModals } from './components/SaaSModals';
 import { PdfExportModal } from './components/PdfExportModal';
 import { ProductionHealthModal } from './components/ProductionHealthModal';
+import { SmoothScrollProvider } from './components/SmoothScrollProvider';
 import { WifiOff } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
@@ -106,8 +107,10 @@ const MainLayout: React.FC = () => {
 export function App() {
   return (
     <AppProvider>
-      <ToastContainer />
-      <MainLayout />
+      <SmoothScrollProvider>
+        <ToastContainer />
+        <MainLayout />
+      </SmoothScrollProvider>
     </AppProvider>
   );
 }

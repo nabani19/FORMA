@@ -24,8 +24,13 @@ export const getActiveOpenRouterKey = (): string => {
 
 export const setCustomOpenRouterKey = (key: string): void => {
   try {
-    if (key.trim()) {
-      localStorage.setItem('ai_custom_openrouter_key', key.trim());
+    const trimmed = key.trim();
+    if (trimmed) {
+      if (!trimmed.startsWith('sk-or-')) {
+        console.warn('API key rejected: Invalid OpenRouter key format (must start with sk-or-)');
+        return;
+      }
+      localStorage.setItem('ai_custom_openrouter_key', trimmed);
     } else {
       localStorage.removeItem('ai_custom_openrouter_key');
     }

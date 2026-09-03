@@ -242,7 +242,26 @@ export const ScannerModal: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Security & Stability: Validate MIME type
+    if (!file.type.startsWith('image/')) {
+      showToast('Please upload a valid image file (JPEG, PNG, WebP).', 'error');
+      e.target.value = '';
+      return;
+    }
+
+    // Security & Stability: Limit file size to 10MB to prevent memory exhaustion and browser tab crashes
+    const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      showToast('Image size exceeds 10MB limit. Please choose a smaller photo.', 'error');
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
+    reader.onerror = () => {
+      showToast('Failed to read image file. Please try again.', 'error');
+      e.target.value = '';
+    };
     reader.onload = async (event) => {
       const base64 = event.target?.result as string;
       setCurrentImagePreview(base64);
@@ -254,6 +273,7 @@ export const ScannerModal: React.FC = () => {
           scanMode: 'multi_item',
         });
       }
+      e.target.value = '';
     };
     reader.readAsDataURL(file);
   };

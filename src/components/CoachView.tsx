@@ -8,7 +8,7 @@ import { checkRateLimit } from '../utils/securityEngine';
 export const CoachView: React.FC = () => {
   const { user, preferences, mealLogs, setIsScannerOpen, showToast } = useApp();
 
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-3.7-flash');
   const [showKeyModal, setShowKeyModal]   = useState<boolean>(false);
   const [customKeyInput, setCustomKeyInput] = useState<string>(() => getActiveOpenRouterKey());
 

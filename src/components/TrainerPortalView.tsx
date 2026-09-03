@@ -227,6 +227,7 @@ export const TrainerPortalView: React.FC = () => {
               <div className="flex gap-2">
                 <input
                   type="text"
+                  maxLength={500}
                   value={feedbackMessage}
                   onChange={(e) => setFeedbackMessage(e.target.value)}
                   placeholder={`Message ${selectedClient.name} (e.g. Increase hydration + add 50g carbs pre-workout)...`}

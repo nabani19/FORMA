@@ -8,6 +8,11 @@
    Light mode: default (no class)
    ═══════════════════════════════════════════════════════════════ */
 
+/* Native smooth scrolling — replaces lenis JS library */
+html {
+  scroll-behavior: smooth;
+}
+
 @layer base {
   /* ── LIGHT MODE (default) ─────────────────────────────────── */
   :root {

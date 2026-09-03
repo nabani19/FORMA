@@ -140,8 +140,8 @@ Guidelines:
 
   const activeApiKey = getActiveOpenRouterKey();
 
-  // Try selected model first, with automatic fallback to deepseek-chat or gpt-4o-mini if necessary
-  const candidateModels = [modelId, 'deepseek/deepseek-chat', 'openai/gpt-4o-mini'];
+  // Try selected model first, then gpt-4o-mini (highest uptime), then deepseek as last resort
+  const candidateModels = [modelId, 'openai/gpt-4o-mini', 'deepseek/deepseek-chat'];
   const uniqueCandidates = [...new Set(candidateModels)];
 
   for (const candidate of uniqueCandidates) {

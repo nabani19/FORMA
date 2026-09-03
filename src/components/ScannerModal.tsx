@@ -257,12 +257,15 @@ export const ScannerModal: React.FC = () => {
       return;
     }
 
+    let cancelled = false;
     const reader = new FileReader();
     reader.onerror = () => {
+      if (cancelled) return;
       showToast('Failed to read image file. Please try again.', 'error');
       e.target.value = '';
     };
     reader.onload = async (event) => {
+      if (cancelled) return;
       const base64 = event.target?.result as string;
       setCurrentImagePreview(base64);
       if (mode === 'label_ocr') {
@@ -276,6 +279,8 @@ export const ScannerModal: React.FC = () => {
       e.target.value = '';
     };
     reader.readAsDataURL(file);
+    // Return a cleanup reference so the next rapid selection cancels in-flight reads
+    return () => { cancelled = true; };
   };
 
   // Speech-to-Text Voice Dictation for Describe Meal Mode

@@ -92,7 +92,7 @@ export const OnboardingWizard: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden" style={{ backgroundColor: '#121A2B' }}>
+      <div className="w-full max-w-3xl bg-[#121A2B] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
         
         {/* Ambient glow */}
         <div className="absolute -top-20 -left-20 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -106,18 +106,15 @@ export const OnboardingWizard: React.FC = () => {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-slate-100 flex flex-wrap items-center gap-2">
+                <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-slate-100 flex flex-wrap items-center gap-2">
                   Welcome to Forma
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono">
                     WHO 2024 • ICMR-NIN
                   </span>
-                </h1>
+                </h2>
 
-                {/* Fix #1: Outcome-focused support text (16px / 24px line height, max-w 280px mobile / 520px desktop, color #B8C0D4 on #121A2B, CR >= 7:1) */}
-                <p
-                  className="mt-1.5 text-[16px] leading-[24px] max-w-[280px] md:max-w-[520px] font-normal"
-                  style={{ color: '#B8C0D4' }}
-                >
+                {/* Outcome-focused support text — color #B8C0D4 verified CR ≥ 7:1 on #121A2B */}
+                <p className="mt-1.5 text-[16px] leading-[24px] max-w-[280px] md:max-w-[520px] font-normal text-[#B8C0D4]">
                   Unlock your clinical metabolic plan, Adonis V-Taper targets, and personalized budget meal blueprint in under 60 seconds.
                 </p>
                 <p className="text-xs text-slate-400 mt-1">Step {step} of 3 • Clinical Biometrics, Cultural Regimes & Budget</p>
@@ -136,16 +133,9 @@ export const OnboardingWizard: React.FC = () => {
             />
           </div>
 
-          {/* Fix #2: Trust & Reassurance Row (16px lock, 14px text, 16px below on desktop / 12px on mobile, fill #111827, border #2A3348, text #D7DDEA) */}
-          <div
-            className="mt-3 md:mt-4 px-3.5 py-2.5 rounded-xl flex items-center gap-2.5 text-[14px] leading-snug border transition-all"
-            style={{
-              backgroundColor: '#111827',
-              borderColor: '#2A3348',
-              color: '#D7DDEA',
-            }}
-          >
-            <Lock className="w-4 h-4 text-emerald-400 shrink-0" style={{ width: 16, height: 16 }} />
+          {/* Trust & Reassurance Row — bg #111827, border #2A3348, text #D7DDEA */}
+          <div className="mt-3 md:mt-4 px-3.5 py-2.5 rounded-xl flex items-center gap-2.5 text-[14px] leading-snug border border-[#2A3348] bg-[#111827] text-[#D7DDEA] transition-all">
+            <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
               <strong className="font-semibold text-slate-100">Private & Secure:</strong> Your biometrics, health biomarkers, and budget remain encrypted locally and are never shared.
             </span>

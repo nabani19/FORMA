@@ -61,6 +61,10 @@ export function checkRateLimit(
   const record = rateLimitStore[identifier];
 
   if (!record || now > record.resetTime) {
+    // Lazy GC: prune all expired entries whenever we create a new window
+    for (const key of Object.keys(rateLimitStore)) {
+      if (now > rateLimitStore[key].resetTime) delete rateLimitStore[key];
+    }
     rateLimitStore[identifier] = {
       count: 1,
       resetTime: now + windowMs,

@@ -298,7 +298,8 @@ async function runAllTRACkerTests() {
     assert.ok(parsedOcr, 'Should successfully parse OCR JSON');
     assert.strictEqual(parsedOcr.name, 'High Protein Whey Isolate (Chocolate)');
     assert.strictEqual(parsedOcr.nutritionalInfo.protein_g, 25);
-    assert.strictEqual(parsedOcr.nutritionalInfo.calories, 120);
+    // Deterministic Atwater factor: (25*4) + (2*4) + (1*9) = 117 kcal (overriding manufacturer 120 rounded estimate)
+    assert.strictEqual(parsedOcr.nutritionalInfo.calories, 117);
     assert.strictEqual(parsedOcr.source, 'Forma Nutrition Facts OCR');
     assert.strictEqual(parsedOcr.allergens[0], 'Dairy');
   });
@@ -360,7 +361,8 @@ Hope this helps your macro goals!`;
     assert.ok(parsed, 'Must successfully parse even with conversational wrappers and markdown code blocks');
     assert.strictEqual(parsed.name, 'Tandoori Paneer Tikka');
     assert.strictEqual(parsed.nutritionalInfo.protein_g, 18.5);
-    assert.strictEqual(parsed.nutritionalInfo.calories, 320);
+    // Deterministic Atwater factor: (18.5*4) + (8*4) + (24*9) = 322 kcal (overriding LLM 320 hallucinated estimate)
+    assert.strictEqual(parsed.nutritionalInfo.calories, 322);
     assert.strictEqual(parsed.cuisine, 'Indian');
   });
 

@@ -1,0 +1,7 @@
+# Backend Python env — never commit secrets or venv
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local

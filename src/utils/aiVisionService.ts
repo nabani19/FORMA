@@ -135,7 +135,8 @@ CRITICAL INSTRUCTIONS:
 1. Return ONLY valid, raw JSON (no markdown formatting, no code blocks, no backticks).
 2. If the plate contains multiple separate items (e.g. "Dal + 2 Rotis + Rice + Salad" or "Chicken + Broccoli + Sweet Potato"), decompose them into the "decomposedComponents" array!
 3. Always output all dish names, component names, and descriptions in pure English. Do NOT include Hindi or Devanagari script.
-4. Adhere strictly to the following JSON structure:
+4. DO NOT output any calorie or energy values — calories will be computed deterministically from macros. Only output macronutrient grams.
+5. Adhere strictly to the following JSON structure:
 {
   "_id": "scan_ai_unique_id",
   "name": "Exact dish name (e.g. Paneer Butter Masala with 2 Rotis)",
@@ -148,7 +149,6 @@ CRITICAL INSTRUCTIONS:
       "id": "comp_1",
       "name": "Component Name (e.g. Tawa Roti)",
       "portionGrams": 70,
-      "calories": 160,
       "protein_g": 6.0,
       "carbs_g": 32.0,
       "fat_g": 1.0,
@@ -158,7 +158,6 @@ CRITICAL INSTRUCTIONS:
     }
   ],
   "nutritionalInfo": {
-    "calories": number (total kcal for the servingSizeGrams),
     "protein_g": number,
     "carbs_g": number,
     "netCarbs_g": number,
@@ -336,28 +335,43 @@ export function parseAndSanitizeAiFoodResponse(
       return null;
     }
 
+    /**
+     * DETERMINISTIC CALORIE CALCULATION — Atwater factors
+     * We NEVER trust LLM-generated calorie values to avoid hallucination.
+     * calories = (protein_g × 4) + (carbs_g × 4) + (fat_g × 9)
+     */
+    const calcCalories = (p: number, c: number, f: number): number =>
+      Math.round(p * 4 + c * 4 + f * 9);
+
     const serving = Number(data.servingSizeGrams) || 200;
-    const cals = Number(data.nutritionalInfo.calories) || 250;
     const protein = Number(data.nutritionalInfo.protein_g) || 12;
     const carbs = Number(data.nutritionalInfo.carbs_g) || 30;
     const fat = Number(data.nutritionalInfo.fat_g) || 8;
     const fiber = Number(data.nutritionalInfo.fiber_g) || 4;
+    // Calories calculated from macros — deterministic, no LLM hallucination
+    const cals = calcCalories(protein, carbs, fat);
 
-    // Parse decomposed items if present
+    // Parse decomposed items if present — calories calculated per-component
     let decomposedComponents: PlateComponent[] | undefined;
     if (Array.isArray(data.decomposedComponents) && data.decomposedComponents.length > 0) {
-      decomposedComponents = data.decomposedComponents.map((comp: any, idx: number) => ({
-        id: comp.id || `comp_${Date.now()}_${idx}`,
-        name: stripHtml(String(comp.name || `Component ${idx + 1}`)),
-        portionGrams: Number(comp.portionGrams) || Math.round(serving / data.decomposedComponents.length),
-        calories: Number(comp.calories) || Math.round(cals / data.decomposedComponents.length),
-        protein_g: Number(comp.protein_g) || 0,
-        carbs_g: Number(comp.carbs_g) || 0,
-        fat_g: Number(comp.fat_g) || 0,
-        fiber_g: Number(comp.fiber_g) || 0,
-        category: comp.category ? stripHtml(String(comp.category)) : undefined,
-        selected: comp.selected !== false,
-      }));
+      decomposedComponents = data.decomposedComponents.map((comp: any, idx: number) => {
+        const cp = Number(comp.protein_g) || 0;
+        const cc = Number(comp.carbs_g) || 0;
+        const cf = Number(comp.fat_g) || 0;
+        return {
+          id: comp.id || `comp_${Date.now()}_${idx}`,
+          name: stripHtml(String(comp.name || `Component ${idx + 1}`)),
+          portionGrams: Number(comp.portionGrams) || Math.round(serving / data.decomposedComponents.length),
+          // Deterministic: calculated from component macros, not LLM-provided
+          calories: calcCalories(cp, cc, cf),
+          protein_g: Math.round(cp * 10) / 10,
+          carbs_g: Math.round(cc * 10) / 10,
+          fat_g: Math.round(cf * 10) / 10,
+          fiber_g: Math.round((Number(comp.fiber_g) || 0) * 10) / 10,
+          category: comp.category ? stripHtml(String(comp.category)) : undefined,
+          selected: comp.selected !== false,
+        };
+      });
     }
 
     const isDecomposed = Boolean(data.isDecomposedPlate || (decomposedComponents && decomposedComponents.length > 1));
@@ -372,12 +386,17 @@ export function parseAndSanitizeAiFoodResponse(
       isDecomposedPlate: isDecomposed,
       decomposedComponents: decomposedComponents,
       nutritionalInfo: {
+        // Deterministic — computed from macros, never from LLM calories field
         calories: cals,
         protein_g: protein,
         carbs_g: carbs,
-        netCarbs_g: data.nutritionalInfo.netCarbs_g !== undefined ? Number(data.nutritionalInfo.netCarbs_g) : Math.max(0, carbs - fiber),
+        netCarbs_g: data.nutritionalInfo.netCarbs_g !== undefined
+          ? Number(data.nutritionalInfo.netCarbs_g)
+          : Math.max(0, carbs - fiber),
         fat_g: fat,
-        saturatedFat_g: data.nutritionalInfo.saturatedFat_g !== undefined ? Number(data.nutritionalInfo.saturatedFat_g) : Math.round(fat * 0.35),
+        saturatedFat_g: data.nutritionalInfo.saturatedFat_g !== undefined
+          ? Number(data.nutritionalInfo.saturatedFat_g)
+          : Math.round(fat * 0.35 * 10) / 10,
         fiber_g: fiber,
         sugar_g: Number(data.nutritionalInfo.sugar_g) || 3,
         glycemicIndex: Number(data.nutritionalInfo.glycemicIndex) || 50,
@@ -541,7 +560,6 @@ export function semanticFoodFallback(
 
   if (rawParts.length > 1 || isComposite) {
     const components: PlateComponent[] = [];
-    let totalCals = 0;
     let totalProt = 0;
     let totalCarbs = 0;
     let totalFat = 0;
@@ -556,18 +574,19 @@ export function semanticFoodFallback(
 
       let name = raw;
       let grams = 100;
-      let cals = 100;
       let prot = 5;
       let carbs = 15;
       let fat = 2;
       let fiber = 1;
       let category = 'General Food';
 
+      // Deterministic calorie calc from macros — Atwater factors (P×4 + C×4 + F×9)
+      const calcCals = (p: number, c: number, f: number) => Math.round(p * 4 + c * 4 + f * 9);
+
       // 1. Chia seeds
       if (lower.includes('chia')) {
         const gMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|gram|grams)/);
         grams = gMatch ? parseFloat(gMatch[1]) : 10;
-        cals = Math.round(grams * 4.86);
         prot = Math.round(grams * 0.17 * 10) / 10;
         carbs = Math.round(grams * 0.42 * 10) / 10;
         fat = Math.round(grams * 0.31 * 10) / 10;
@@ -578,7 +597,6 @@ export function semanticFoodFallback(
       // 2. Ginger Tea / Sugar Free Tea / Green Tea
       else if (lower.includes('tea') && (lower.includes('ginger') || lower.includes('sugar free') || lower.includes('green') || lower.includes('black') || lower.includes('herbal'))) {
         grams = 240;
-        cals = 2;
         prot = 0.1;
         carbs = 0.4;
         fat = 0;
@@ -589,9 +607,8 @@ export function semanticFoodFallback(
       // 3. Regular Tea / Chai
       else if (lower.includes('tea') || lower.includes('chai')) {
         grams = 200;
-        cals = lower.includes('sugar free') ? 2 : 25;
         prot = 1;
-        carbs = 3;
+        carbs = lower.includes('sugar free') ? 0.4 : 3;
         fat = 1;
         fiber = 0;
         name = '1 Cup Fresh Tea';
@@ -608,7 +625,6 @@ export function semanticFoodFallback(
         } else {
           grams = 150;
         }
-        cals = Math.round(grams * 1.30);
         prot = Math.round(grams * 0.027 * 10) / 10;
         carbs = Math.round(grams * 0.28 * 10) / 10;
         fat = Math.round(grams * 0.003 * 10) / 10;
@@ -620,7 +636,6 @@ export function semanticFoodFallback(
       else if (lower.includes('paneer') || lower.includes('panner')) {
         const gMatch = lower.match(/(\d+)\s*(?:g|gm|gram|grams)/);
         grams = gMatch ? parseInt(gMatch[1], 10) : 100;
-        cals = Math.round(grams * 2.0);
         prot = Math.round(grams * 0.14 * 10) / 10;
         carbs = Math.round(grams * 0.06 * 10) / 10;
         fat = Math.round(grams * 0.14 * 10) / 10;
@@ -634,7 +649,6 @@ export function semanticFoodFallback(
         const countMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:egg\s*)?yolk/);
         const count = countMatch ? parseFloat(countMatch[1]) : 1;
         grams = Math.round(count * 17);
-        cals = Math.round(count * 55);
         prot = Math.round(count * 2.7 * 10) / 10;
         carbs = Math.round(count * 0.6 * 10) / 10;
         fat = Math.round(count * 4.5 * 10) / 10;
@@ -648,7 +662,6 @@ export function semanticFoodFallback(
         const countMatch = lower.match(/(\d+)\s*(?:boiled\s*)?egg/);
         const count = countMatch ? parseInt(countMatch[1], 10) : 2;
         grams = count * 50;
-        cals = count * 78;
         prot = Math.round(count * 6.3 * 10) / 10;
         carbs = Math.round(count * 0.6 * 10) / 10;
         fat = Math.round(count * 5.3 * 10) / 10;
@@ -662,7 +675,6 @@ export function semanticFoodFallback(
         const countMatch = lower.match(/(\d+)\s*(?:piece|pc|pieces)/);
         const count = countMatch ? parseInt(countMatch[1], 10) : 1;
         grams = count * 100;
-        cals = count * 125;
         prot = count * 20;
         carbs = 0;
         fat = count * 4.8;
@@ -676,7 +688,6 @@ export function semanticFoodFallback(
         const countMatch = lower.match(/(\d+)\s*(?:piece|pc|pieces)/);
         const count = countMatch ? parseInt(countMatch[1], 10) : 1;
         grams = count * 100;
-        cals = count * 135;
         prot = count * 18;
         carbs = 0;
         fat = count * 6.8;
@@ -690,7 +701,6 @@ export function semanticFoodFallback(
         const katoriMatch = lower.match(/(\d+)\s*(?:katori|bowl|katoris|bowls)/);
         const katoris = katoriMatch ? parseInt(katoriMatch[1], 10) : 1;
         grams = katoris * 150;
-        cals = katoris * 155;
         prot = katoris * 9;
         carbs = katoris * 20;
         fat = katoris * 4;
@@ -703,7 +713,6 @@ export function semanticFoodFallback(
       else if (lower.includes('dahi') || lower.includes('curd') || lower.includes('yogurt') || lower.includes('raita')) {
         const gMatch = lower.match(/(\d+)\s*(?:g|gm|gram|grams)/);
         grams = gMatch ? parseInt(gMatch[1], 10) : 100;
-        cals = Math.round(grams * 0.61);
         prot = Math.round(grams * 0.035 * 10) / 10;
         carbs = Math.round(grams * 0.047 * 10) / 10;
         fat = Math.round(grams * 0.033 * 10) / 10;
@@ -717,7 +726,6 @@ export function semanticFoodFallback(
         const countMatch = lower.match(/(\d+)\s*(?:roti|chapati|phulka|rotis|chapatis)/);
         const count = countMatch ? parseInt(countMatch[1], 10) : 2;
         grams = count * 35;
-        cals = count * 80;
         prot = count * 3.1;
         carbs = count * 17;
         fat = count * 0.5;
@@ -730,13 +738,15 @@ export function semanticFoodFallback(
       else {
         name = raw.charAt(0).toUpperCase() + raw.slice(1);
         grams = 100;
-        cals = 120;
         prot = 4;
         carbs = 18;
         fat = 3;
         fiber = 2;
         category = 'Balanced Food';
       }
+
+      // Calories always derived from macros — Atwater: P×4 + C×4 + F×9
+      const cals = calcCals(prot, carbs, fat);
 
       components.push({
         id: `comp_decomposed_${Date.now()}_${i}`,
@@ -751,7 +761,6 @@ export function semanticFoodFallback(
         selected: true,
       });
 
-      totalCals += cals;
       totalProt += prot;
       totalCarbs += carbs;
       totalFat += fat;
@@ -760,6 +769,8 @@ export function semanticFoodFallback(
     }
 
     if (components.length > 0) {
+      // Deterministic total calories from summed macros — Atwater: P×4 + C×4 + F×9
+      const totalCals = Math.round(totalProt * 4 + totalCarbs * 4 + totalFat * 9);
       return {
         _id: `scan_composite_${Date.now()}`,
         name: 'Custom Multi-Dish Balanced Plate',
@@ -770,6 +781,7 @@ export function semanticFoodFallback(
         isDecomposedPlate: true,
         decomposedComponents: components,
         nutritionalInfo: {
+          // Deterministic — never trusted from LLM, computed from macro totals
           calories: totalCals,
           protein_g: Math.round(totalProt * 10) / 10,
           carbs_g: Math.round(totalCarbs * 10) / 10,

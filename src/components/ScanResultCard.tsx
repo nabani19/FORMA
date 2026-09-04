@@ -79,11 +79,12 @@ export const ScanResultCard: React.FC<ScanResultCardProps> = ({ foodItem, onLogg
 
   if (hasDecomposed) {
     const selectedComps = components.filter((c) => c.selected);
-    totalCalories = selectedComps.reduce((sum, c) => sum + c.calories, 0);
     totalProtein = Math.round(selectedComps.reduce((sum, c) => sum + c.protein_g, 0) * 10) / 10;
     totalCarbs = Math.round(selectedComps.reduce((sum, c) => sum + c.carbs_g, 0) * 10) / 10;
     totalFat = Math.round(selectedComps.reduce((sum, c) => sum + c.fat_g, 0) * 10) / 10;
     totalFiber = Math.round(selectedComps.reduce((sum, c) => sum + c.fiber_g, 0) * 10) / 10;
+    // Deterministic headline calories — Atwater: (P×4) + (C×4) + (F×9)
+    totalCalories = Math.round(totalProtein * 4 + totalCarbs * 4 + totalFat * 9);
     totalNetCarbs = Math.max(0, Math.round((totalCarbs - totalFiber) * 10) / 10);
     totalSatFat = Math.round(totalFat * 0.35 * 10) / 10;
     activePortionWeight = selectedComps.reduce((sum, c) => sum + c.portionGrams, 0);

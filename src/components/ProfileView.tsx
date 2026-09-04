@@ -4,7 +4,6 @@ import { User, ActivityLevel, HealthGoal, Gender } from '../types';
 import { User as UserIcon, ShieldAlert, Save, Plus, ShieldCheck, Server, Cpu, Globe, RefreshCw, Sun, Moon, Target } from 'lucide-react';
 import { runOwaspSecurityAudit, getSecurityHeaders } from '../utils/securityEngine';
 import { getProductionClusterTelemetry } from '../utils/k8sHealth';
-import { GamificationWidget } from './GamificationWidget';
 
 export const ProfileView: React.FC = () => {
   const { user, updateUser, preferences, addPreference, removePreference, resetAllData, isDarkMode, toggleDarkMode } = useApp();
@@ -82,9 +81,6 @@ export const ProfileView: React.FC = () => {
           <span>Save Profile Changes</span>
         </button>
       </div>
-
-      {/* Gamification & Streaks Badges */}
-      <GamificationWidget />
 
       {/* Grid: Personal Info & Daily Goals */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

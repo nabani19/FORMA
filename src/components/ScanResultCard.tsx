@@ -52,14 +52,18 @@ export const ScanResultCard: React.FC<ScanResultCardProps> = ({ foodItem, onLogg
       prev.map((c) => {
         if (c.id !== id) return c;
         const ratio = validGrams / (c.portionGrams || 1);
+        const newP = Math.round(c.protein_g * ratio * 10) / 10;
+        const newC = Math.round(c.carbs_g * ratio * 10) / 10;
+        const newF = Math.round(c.fat_g * ratio * 10) / 10;
         return {
           ...c,
           portionGrams: validGrams,
-          calories: Math.round(c.calories * ratio),
-          protein_g: Math.round(c.protein_g * ratio * 10) / 10,
-          carbs_g: Math.round(c.carbs_g * ratio * 10) / 10,
-          fat_g: Math.round(c.fat_g * ratio * 10) / 10,
+          protein_g: newP,
+          carbs_g: newC,
+          fat_g: newF,
           fiber_g: Math.round(c.fiber_g * ratio * 10) / 10,
+          // Deterministic Atwater factor for individual component
+          calories: Math.round(newP * 4 + newC * 4 + newF * 9),
         };
       })
     );

@@ -136,7 +136,14 @@ CRITICAL INSTRUCTIONS:
 2. If the plate contains multiple separate items (e.g. "Dal + 2 Rotis + Rice + Salad" or "Chicken + Broccoli + Sweet Potato"), decompose them into the "decomposedComponents" array!
 3. Always output all dish names, component names, and descriptions in pure English. Do NOT include Hindi or Devanagari script.
 4. DO NOT output any calorie or energy values — calories will be computed deterministically from macros. Only output macronutrient grams.
-5. Adhere strictly to the following JSON structure:
+5. CRITICAL NUTRITIONAL DENSITY RULES (NEVER USE RAW/DRY MACROS FOR COOKED FOODS):
+   - COOKED RICE (Steamed/Boiled): Rice absorbs 2.5x-3x water during cooking. 100g of COOKED white rice has ~130 kcal (28g carbs, 2.7g protein, 0.3g fat). 400g of cooked rice has ~112g carbs, ~10.8g protein, ~1.2g fat (~520 kcal). NEVER output 300g+ carbs or 1500+ kcal for 400g cooked rice — that is the dry raw grain error!
+   - COOKED DAL / LENTILS (Tadka, Moong, Toor, Sambar): Cooked dal is 75-80% water. 100g of cooked dal has ~85 kcal (5.5g protein, 13g carbs, 2g fat). 200g of cooked dal has ~170 kcal (11g protein, 26g carbs, 4g fat). NEVER use dry raw lentil values!
+   - PANEER / PANEER CURRY: 100g raw paneer has ~265 kcal (18g protein, 20g fat, 3g carbs). 40g paneer has ~7.2g protein, ~8g fat (~106 kcal). 100g paneer curry has ~170 kcal (7g protein, 6g carbs, 13g fat).
+   - ROTI / CHAPATI: 1 standard tawa roti (~35-40g) has ~105 kcal (3.5g protein, 21g carbs, 0.6g fat).
+   - PARATHA: 1 plain shallow-fried paratha (~70-80g) has ~220-250 kcal (4.5g protein, 32g carbs, 9-11g fat).
+   - PHYSICAL UPPER BOUND: For any cooked wet food (rice, curries, dal, vegetables), the sum of (protein_g + carbs_g + fat_g) CANNOT exceed portionGrams * 0.40 because cooked food is 60-80% water!
+6. Adhere strictly to the following JSON structure:
 {
   "_id": "scan_ai_unique_id",
   "name": "Exact dish name (e.g. Paneer Butter Masala with 2 Rotis)",
@@ -310,6 +317,117 @@ export async function analyzeNutritionLabelOcr(
 }
 
 /**
+ * Clinical Cooked Food Nutrient Normalizer (ICMR-NIN & USDA 2024 standards)
+ * Prevents LLM models from returning raw dry grain/pulse densities (~80% carbs, ~24% protein)
+ * for water-hydrated cooked dishes (~70-80% water), which causes 3x-4x "overloaded calories".
+ */
+export function normalizeFoodNutrientDensity(
+  name: string,
+  portionGrams: number,
+  protein: number,
+  carbs: number,
+  fat: number,
+  fiber: number
+): { protein: number; carbs: number; fat: number; fiber: number; calories: number } {
+  const lowerName = (name || '').toLowerCase();
+  let cp = Math.max(0, Number(protein) || 0);
+  let cc = Math.max(0, Number(carbs) || 0);
+  let cf = Math.max(0, Number(fat) || 0);
+  let cFib = Math.max(0, Number(fiber) || 0);
+  const pGrams = Math.max(1, Number(portionGrams) || 100);
+
+  // 1. Cooked Rice (Steamed/Boiled, Chawal, Bhaat, Jeera Rice, Basmati)
+  // Dry raw white rice has ~80% carbs. Cooked rice absorbs 2.5-3x water, so cooked rice is only ~28% carbs, 2.7% protein, 0.3% fat (~130 kcal/100g).
+  // If carb density exceeds 35% of portion weight, the model hallucinated raw dry grain density (e.g. 320g carbs for 400g cooked rice).
+  if ((lowerName.includes('rice') || lowerName.includes('chawal') || lowerName.includes('bhaat')) && 
+      !lowerName.includes('flour') && !lowerName.includes('dry') && !lowerName.includes('cake') && !lowerName.includes('crisp')) {
+    if (cc / pGrams > 0.35 || cp / pGrams > 0.05) {
+      cc = Math.round(pGrams * 0.28 * 10) / 10;
+      cp = Math.round(pGrams * 0.027 * 10) / 10;
+      cf = Math.round(pGrams * 0.003 * 10) / 10;
+      cFib = Math.round(pGrams * 0.004 * 10) / 10;
+    }
+  }
+  // 2. Cooked Dal / Lentils / Sambar (Tadka, Moong, Toor, Masoor, Chana Dal)
+  // Dry raw lentils are ~24% protein and ~60% carbs. Cooked dal is 75-80% water: ~5.5% protein, ~13% carbs, ~2% fat (~85-90 kcal/100g).
+  else if ((lowerName.includes('dal') || lowerName.includes('daal') || lowerName.includes('sambar') || lowerName.includes('lentil')) && 
+           !lowerName.includes('dry') && !lowerName.includes('raw') && !lowerName.includes('flour') && !lowerName.includes('namkeen')) {
+    if (cc / pGrams > 0.22 || cp / pGrams > 0.08) {
+      cc = Math.round(pGrams * 0.13 * 10) / 10;
+      cp = Math.round(pGrams * 0.055 * 10) / 10;
+      cf = Math.round(pGrams * 0.02 * 10) / 10;
+      cFib = Math.round(pGrams * 0.02 * 10) / 10;
+    }
+  }
+  // 3. Paneer / Paneer Curries
+  // 100g fresh paneer is ~18% protein, ~20% fat, ~3% carbs (~265 kcal). It CANNOT physically have >20% protein.
+  else if (lowerName.includes('paneer') || lowerName.includes('panner')) {
+    if (lowerName.includes('curry') || lowerName.includes('masala') || lowerName.includes('gravy') || lowerName.includes('bhurji') || lowerName.includes('butter')) {
+      // Paneer curry with gravy: ~7% protein, ~6% carbs, ~12% fat (~160-170 kcal/100g)
+      if (cp / pGrams > 0.12 || cf / pGrams > 0.18) {
+        cp = Math.round(pGrams * 0.07 * 10) / 10;
+        cc = Math.round(pGrams * 0.06 * 10) / 10;
+        cf = Math.round(pGrams * 0.12 * 10) / 10;
+      }
+    } else {
+      // Raw/cubed paneer: max 18% protein, 20% fat
+      if (cp / pGrams > 0.22) {
+        cp = Math.round(pGrams * 0.18 * 10) / 10;
+        cf = Math.round(pGrams * 0.20 * 10) / 10;
+        cc = Math.round(pGrams * 0.03 * 10) / 10;
+      }
+    }
+  }
+  // 4. Soya Curry / Soya Chunks (Cooked)
+  // Dehydrated raw soya chunks are ~52% protein, but once boiled in curry they absorb 3x water: ~11% protein, ~9% carbs, ~4% fat (~115 kcal/100g).
+  else if (lowerName.includes('soya') || lowerName.includes('soy')) {
+    if (lowerName.includes('curry') || lowerName.includes('cooked') || lowerName.includes('gravy') || lowerName.includes('sabzi')) {
+      if (cp / pGrams > 0.18) {
+        cp = Math.round(pGrams * 0.11 * 10) / 10;
+        cc = Math.round(pGrams * 0.09 * 10) / 10;
+        cf = Math.round(pGrams * 0.04 * 10) / 10;
+      }
+    }
+  }
+  // 5. Paratha / Roti / Indian Flatbreads
+  else if (lowerName.includes('paratha') || lowerName.includes('parotta')) {
+    if (cc / pGrams > 0.55 || cf / pGrams > 0.25) {
+      cc = Math.round(pGrams * 0.42 * 10) / 10;
+      cp = Math.round(pGrams * 0.06 * 10) / 10;
+      cf = Math.round(pGrams * 0.12 * 10) / 10;
+    }
+  } else if (lowerName.includes('roti') || lowerName.includes('chapati') || lowerName.includes('phulka')) {
+    if (cc / pGrams > 0.60) {
+      cc = Math.round(pGrams * 0.52 * 10) / 10;
+      cp = Math.round(pGrams * 0.09 * 10) / 10;
+      cf = Math.round(pGrams * 0.015 * 10) / 10;
+    }
+  }
+
+  // 6. Universal Mass Conservation & Hydration Law:
+  // Wet/cooked dishes (anything containing water, gravy, boiled, steamed, vegetable, soup, curry)
+  // CANNOT have macro mass exceeding 42% of total portion weight because cooked food is 60-80% water.
+  const isWetCooked = lowerName.includes('curry') || lowerName.includes('cooked') || lowerName.includes('boiled') ||
+    lowerName.includes('steamed') || lowerName.includes('gravy') || lowerName.includes('soup') ||
+    lowerName.includes('dal') || lowerName.includes('daal') || lowerName.includes('sabzi') ||
+    lowerName.includes('khichdi') || lowerName.includes('biryani') || lowerName.includes('pulao') ||
+    lowerName.includes('vegetable') || lowerName.includes('salad');
+
+  const totalMacroMass = cp + cc + cf;
+  const maxAllowedDensity = isWetCooked ? 0.42 : 0.95;
+
+  if (totalMacroMass > pGrams * maxAllowedDensity) {
+    const scaleFactor = (pGrams * maxAllowedDensity) / totalMacroMass;
+    cp = Math.round(cp * scaleFactor * 10) / 10;
+    cc = Math.round(cc * scaleFactor * 10) / 10;
+    cf = Math.round(cf * scaleFactor * 10) / 10;
+  }
+
+  const calories = Math.round(cp * 4 + cc * 4 + cf * 9);
+  return { protein: cp, carbs: cc, fat: cf, fiber: cFib, calories };
+}
+
+/**
  * Parses and validates the raw JSON returned from the AI model
  */
 export function parseAndSanitizeAiFoodResponse(
@@ -335,39 +453,38 @@ export function parseAndSanitizeAiFoodResponse(
       return null;
     }
 
-    /**
-     * DETERMINISTIC CALORIE CALCULATION — Atwater factors
-     * We NEVER trust LLM-generated calorie values to avoid hallucination.
-     * calories = (protein_g × 4) + (carbs_g × 4) + (fat_g × 9)
-     */
-    const calcCalories = (p: number, c: number, f: number): number =>
-      Math.round(p * 4 + c * 4 + f * 9);
-
     const serving = Number(data.servingSizeGrams) || 200;
-    const protein = Number(data.nutritionalInfo.protein_g) || 12;
-    const carbs = Number(data.nutritionalInfo.carbs_g) || 30;
-    const fat = Number(data.nutritionalInfo.fat_g) || 8;
-    const fiber = Number(data.nutritionalInfo.fiber_g) || 4;
-    // Calories calculated from macros — deterministic, no LLM hallucination
-    const cals = calcCalories(protein, carbs, fat);
+    const rawProtein = Number(data.nutritionalInfo.protein_g) || 12;
+    const rawCarbs = Number(data.nutritionalInfo.carbs_g) || 30;
+    const rawFat = Number(data.nutritionalInfo.fat_g) || 8;
+    const rawFiber = Number(data.nutritionalInfo.fiber_g) || 4;
 
-    // Parse decomposed items if present — calories calculated per-component
+    // Parse decomposed items if present — apply clinical nutrient density normalization per component
     let decomposedComponents: PlateComponent[] | undefined;
     if (Array.isArray(data.decomposedComponents) && data.decomposedComponents.length > 0) {
       decomposedComponents = data.decomposedComponents.map((comp: any, idx: number) => {
-        const cp = Number(comp.protein_g) || 0;
-        const cc = Number(comp.carbs_g) || 0;
-        const cf = Number(comp.fat_g) || 0;
+        const cName = stripHtml(String(comp.name || `Component ${idx + 1}`));
+        const pGrams = Number(comp.portionGrams) || Math.round(serving / data.decomposedComponents.length);
+
+        const normalized = normalizeFoodNutrientDensity(
+          cName,
+          pGrams,
+          Number(comp.protein_g) || 0,
+          Number(comp.carbs_g) || 0,
+          Number(comp.fat_g) || 0,
+          Number(comp.fiber_g) || 0
+        );
+
         return {
           id: comp.id || `comp_${Date.now()}_${idx}`,
-          name: stripHtml(String(comp.name || `Component ${idx + 1}`)),
-          portionGrams: Number(comp.portionGrams) || Math.round(serving / data.decomposedComponents.length),
-          // Deterministic: calculated from component macros, not LLM-provided
-          calories: calcCalories(cp, cc, cf),
-          protein_g: Math.round(cp * 10) / 10,
-          carbs_g: Math.round(cc * 10) / 10,
-          fat_g: Math.round(cf * 10) / 10,
-          fiber_g: Math.round((Number(comp.fiber_g) || 0) * 10) / 10,
+          name: cName,
+          portionGrams: pGrams,
+          // Deterministic Atwater calculation strictly from normalized macros
+          calories: normalized.calories,
+          protein_g: normalized.protein,
+          carbs_g: normalized.carbs,
+          fat_g: normalized.fat,
+          fiber_g: normalized.fiber,
           category: comp.category ? stripHtml(String(comp.category)) : undefined,
           selected: comp.selected !== false,
         };
@@ -376,28 +493,52 @@ export function parseAndSanitizeAiFoodResponse(
 
     const isDecomposed = Boolean(data.isDecomposedPlate || (decomposedComponents && decomposedComponents.length > 1));
 
+    // Calculate aggregated parent nutrients
+    let finalServing = serving;
+    let finalProtein = rawProtein;
+    let finalCarbs = rawCarbs;
+    let finalFat = rawFat;
+    let finalFiber = rawFiber;
+    let finalCalories = Math.round(rawProtein * 4 + rawCarbs * 4 + rawFat * 9);
+
+    if (decomposedComponents && decomposedComponents.length > 0) {
+      // Plate aggregation: parent calories & macros match the exact sum of decomposed components
+      finalServing = decomposedComponents.reduce((sum, c) => sum + c.portionGrams, 0);
+      finalProtein = Math.round(decomposedComponents.reduce((sum, c) => sum + c.protein_g, 0) * 10) / 10;
+      finalCarbs = Math.round(decomposedComponents.reduce((sum, c) => sum + c.carbs_g, 0) * 10) / 10;
+      finalFat = Math.round(decomposedComponents.reduce((sum, c) => sum + c.fat_g, 0) * 10) / 10;
+      finalFiber = Math.round(decomposedComponents.reduce((sum, c) => sum + c.fiber_g, 0) * 10) / 10;
+      finalCalories = Math.round(finalProtein * 4 + finalCarbs * 4 + finalFat * 9);
+    } else {
+      // Single dish: apply normalization directly to defend against raw dry grain hallucinations
+      const normalized = normalizeFoodNutrientDensity(data.name, serving, rawProtein, rawCarbs, rawFat, rawFiber);
+      finalProtein = normalized.protein;
+      finalCarbs = normalized.carbs;
+      finalFat = normalized.fat;
+      finalFiber = normalized.fiber;
+      finalCalories = normalized.calories;
+    }
+
     const foodItem: FoodItem = {
       _id: `scan_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       name: stripHtml(data.name),
       category: stripHtml(data.category || (isDecomposed ? 'Composite Meal' : 'Main Course')),
       cuisine: sanitizeCuisine(data.cuisine),
       imageUrl: imageSrc || getFallbackDishImage(data.name, data.cuisine),
-      servingSizeGrams: serving,
+      servingSizeGrams: finalServing,
       isDecomposedPlate: isDecomposed,
       decomposedComponents: decomposedComponents,
       nutritionalInfo: {
-        // Deterministic — computed from macros, never from LLM calories field
-        calories: cals,
-        protein_g: protein,
-        carbs_g: carbs,
-        netCarbs_g: data.nutritionalInfo.netCarbs_g !== undefined
-          ? Number(data.nutritionalInfo.netCarbs_g)
-          : Math.max(0, carbs - fiber),
-        fat_g: fat,
+        // Deterministic — strictly computed from normalized macros: (P*4) + (C*4) + (F*9)
+        calories: finalCalories,
+        protein_g: finalProtein,
+        carbs_g: finalCarbs,
+        netCarbs_g: Math.max(0, Math.round((finalCarbs - finalFiber) * 10) / 10),
+        fat_g: finalFat,
         saturatedFat_g: data.nutritionalInfo.saturatedFat_g !== undefined
           ? Number(data.nutritionalInfo.saturatedFat_g)
-          : Math.round(fat * 0.35 * 10) / 10,
-        fiber_g: fiber,
+          : Math.round(finalFat * 0.35 * 10) / 10,
+        fiber_g: finalFiber,
         sugar_g: Number(data.nutritionalInfo.sugar_g) || 3,
         glycemicIndex: Number(data.nutritionalInfo.glycemicIndex) || 50,
         glycemicLoad: Number(data.nutritionalInfo.glycemicLoad) || 15,

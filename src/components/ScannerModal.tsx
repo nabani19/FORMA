@@ -5,7 +5,6 @@ import { ScanResultCard } from './ScanResultCard';
 import { 
   X, 
   Camera, 
-  Barcode, 
   Upload, 
   Sparkles, 
   RefreshCw, 
@@ -13,7 +12,6 @@ import {
   FileText, 
   Image as ImageIcon,
   Scale,
-  ScanLine,
   Layers,
   Info,
   Mic,
@@ -24,15 +22,13 @@ import {
 } from 'lucide-react';
 import { 
   analyzeFoodWithAiVision, 
-  analyzeNutritionLabelOcr,
-  lookupBarcodeProduct, 
   VISUAL_PORTION_GUIDES
 } from '../utils/aiVisionService';
 
 export const ScannerModal: React.FC = () => {
   const { isScannerOpen, setIsScannerOpen, showToast } = useApp();
 
-  const [mode, setMode] = useState<'camera' | 'upload' | 'label_ocr' | 'text' | 'barcode'>('camera');
+  const [mode, setMode] = useState<'camera' | 'upload' | 'text'>('camera');
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanStepText, setScanStepText] = useState<string>('Initializing AI Vision Model...');
   const [scannedResult, setScannedResult] = useState<FoodItem | null>(null);
@@ -41,7 +37,6 @@ export const ScannerModal: React.FC = () => {
   const [showPortionGuide, setShowPortionGuide] = useState<boolean>(false);
 
   // Filters & inputs
-  const [manualBarcode, setManualBarcode] = useState<string>('');
   const [textMealQuery, setTextMealQuery] = useState<string>('');
 
   // Image Preview & Base64
@@ -62,14 +57,7 @@ export const ScannerModal: React.FC = () => {
   const [isListening, setIsListening] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
 
-  // Live Barcode Scanner Interval
-  const barcodeIntervalRef = useRef<any>(null);
-
   const stopWebcam = useCallback(() => {
-    if (barcodeIntervalRef.current) {
-      clearInterval(barcodeIntervalRef.current);
-      barcodeIntervalRef.current = null;
-    }
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => track.stop());
@@ -159,52 +147,14 @@ export const ScannerModal: React.FC = () => {
         recognitionRef.current.stop();
         setIsListening(false);
       }
-    } else if (mode === 'camera' || mode === 'label_ocr' || mode === 'barcode') {
+    } else if (mode === 'camera') {
       startWebcam(facingMode);
     } else {
       stopWebcam();
     }
   }, [isScannerOpen, mode, startWebcam, stopWebcam, facingMode, isListening]);
 
-  // Live Barcode Detection if BarcodeDetector is supported
-  useEffect(() => {
-    if (isScannerOpen && mode === 'barcode' && isWebcamActive && 'BarcodeDetector' in window) {
-      try {
-        const barcodeDetector = new (window as any).BarcodeDetector({
-          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code', 'code_128'],
-        });
-
-        barcodeIntervalRef.current = setInterval(async () => {
-          if (videoRef.current && videoRef.current.readyState >= 2 && !isScanning && !scannedResult) {
-            try {
-              const barcodes = await barcodeDetector.detect(videoRef.current);
-              if (barcodes.length > 0) {
-                const detectedCode = barcodes[0].rawValue;
-                if (detectedCode) {
-                  clearInterval(barcodeIntervalRef.current);
-                  barcodeIntervalRef.current = null;
-                  handleBarcodeSubmit(detectedCode);
-                }
-              }
-            } catch (e) {
-              // Ignore single frame detection error
-            }
-          }
-        }, 600);
-      } catch (e) {
-        console.warn('BarcodeDetector initialization error:', e);
-      }
-    }
-
-    return () => {
-      if (barcodeIntervalRef.current) {
-        clearInterval(barcodeIntervalRef.current);
-        barcodeIntervalRef.current = null;
-      }
-    };
-  }, [isScannerOpen, mode, isWebcamActive, isScanning, scannedResult]);
-
-  // Capture frame from webcam and run AI Vision or OCR
+  // Capture frame from webcam and run AI Vision
   const handleCaptureCameraFrame = async () => {
     let capturedBase64: string | undefined;
 
@@ -227,14 +177,10 @@ export const ScannerModal: React.FC = () => {
       }
     }
 
-    if (mode === 'label_ocr') {
-      await runNutritionLabelOcrScan(capturedBase64);
-    } else {
-      await runAiVisionScan({
-        imageBase64: capturedBase64,
-        scanMode: 'multi_item',
-      });
-    }
+    await runAiVisionScan({
+      imageBase64: capturedBase64,
+      scanMode: 'multi_item',
+    });
   };
 
   // Capture from uploaded file or mobile native camera
@@ -268,14 +214,10 @@ export const ScannerModal: React.FC = () => {
       if (cancelled) return;
       const base64 = event.target?.result as string;
       setCurrentImagePreview(base64);
-      if (mode === 'label_ocr') {
-        await runNutritionLabelOcrScan(base64);
-      } else {
-        await runAiVisionScan({
-          imageBase64: base64,
-          scanMode: 'multi_item',
-        });
-      }
+      await runAiVisionScan({
+        imageBase64: base64,
+        scanMode: 'multi_item',
+      });
       e.target.value = '';
     };
     reader.readAsDataURL(file);
@@ -346,29 +288,11 @@ export const ScannerModal: React.FC = () => {
     });
   };
 
-  // Dedicated OCR Runner
-  const runNutritionLabelOcrScan = async (base64Img?: string) => {
-    setIsScanning(true);
-    setScannedResult(null);
-    setScanStepText('Extracting Nutrition Facts OCR table...');
-
-    try {
-      const result = await analyzeNutritionLabelOcr(base64Img || '', (step) => setScanStepText(step));
-      setIsScanning(false);
-      setScannedResult(result);
-      showToast(`Nutrition Label Parsed: ${result.name}`, 'success');
-    } catch (err: any) {
-      console.error('Label OCR error:', err);
-      setIsScanning(false);
-      showToast(err.message || 'Could not OCR nutrition label. Please try again.', 'error');
-    }
-  };
-
   // Central AI Vision Scan Executor
   const runAiVisionScan = async (options: {
     imageBase64?: string;
     textDescription?: string;
-    scanMode?: 'standard' | 'multi_item' | 'nutrition_label_ocr';
+    scanMode?: 'standard' | 'multi_item';
   }) => {
     setIsScanning(true);
     setScannedResult(null);
@@ -395,40 +319,6 @@ export const ScannerModal: React.FC = () => {
     }
   };
 
-  // Barcode Lookup with OpenFoodFacts and Local Database
-  const handleBarcodeSubmit = async (code?: string) => {
-    const searchCode = (code || manualBarcode).trim();
-    if (!searchCode) {
-      showToast('Please enter a barcode number or scan a barcode.', 'warning');
-      return;
-    }
-
-    setIsScanning(true);
-    setScannedResult(null);
-    setScanStepText(`Querying OpenFoodFacts global catalog for code ${searchCode}...`);
-
-    try {
-      const item = await lookupBarcodeProduct(searchCode);
-      setIsScanning(false);
-
-      if (item) {
-        setScannedResult(item);
-        setCurrentImagePreview(item.imageUrl);
-        showToast(`Barcode verified: ${item.name}`, 'success');
-      } else {
-        const estimatedItem = await analyzeFoodWithAiVision({
-          textDescription: `Packaged product with barcode ${searchCode}`,
-          cuisineHint: 'Global',
-        });
-        setScannedResult(estimatedItem);
-        showToast(`Estimated product for barcode ${searchCode}`, 'info');
-      }
-    } catch (err) {
-      setIsScanning(false);
-      showToast('Barcode lookup failed. Please try manual entry or photo scan.', 'error');
-    }
-  };
-
   if (!isScannerOpen) return null;
 
   return (
@@ -451,7 +341,7 @@ export const ScannerModal: React.FC = () => {
                   Gemini 3.7 Flash
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Scan Meal Photo • Snap Nutrition Label • Voice & Text Macro Tracker</p>
+              <p className="text-xs text-slate-400">Scan Meal Photo • Voice & Text Macro Tracker</p>
             </div>
           </div>
 
@@ -511,21 +401,6 @@ export const ScannerModal: React.FC = () => {
 
             <button
               onClick={() => {
-                setMode('label_ocr');
-                startWebcam(facingMode);
-              }}
-              className={`flex-1 min-w-[90px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                mode === 'label_ocr'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <ScanLine className="w-3.5 h-3.5" />
-              <span>Label OCR</span>
-            </button>
-
-            <button
-              onClick={() => {
                 setMode('text');
                 stopWebcam();
               }}
@@ -537,21 +412,6 @@ export const ScannerModal: React.FC = () => {
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Describe</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setMode('barcode');
-                startWebcam(facingMode);
-              }}
-              className={`flex-1 min-w-[80px] flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                mode === 'barcode'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Barcode className="w-3.5 h-3.5" />
-              <span>Barcode</span>
             </button>
           </div>
         )}
@@ -714,71 +574,7 @@ export const ScannerModal: React.FC = () => {
           </div>
         )}
 
-        {/* MODE 3: NUTRITION LABEL OCR SCANNER */}
-        {!isScanning && !scannedResult && mode === 'label_ocr' && (
-          <div className="space-y-4 overflow-y-auto pr-1">
-            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
-              {isWebcamActive ? (
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-center p-6 space-y-2">
-                  <ScanLine className="w-12 h-12 text-slate-600 mx-auto" />
-                  <p className="text-xs font-semibold text-slate-400">
-                    {cameraError || 'Align Nutrition Facts Label on Box/Can/Jar'}
-                  </p>
-                  <button
-                    onClick={() => startWebcam(facingMode)}
-                    className="text-xs font-bold text-emerald-400 underline hover:text-emerald-300"
-                  >
-                    Enable Device Camera
-                  </button>
-                </div>
-              )}
 
-              {/* OCR Reticle Box */}
-              {isWebcamActive && (
-                <div className="absolute inset-x-12 inset-y-6 border-2 border-amber-500/60 rounded-xl pointer-events-none flex flex-col justify-between p-2">
-                  <div className="flex justify-between items-center text-[10px] font-mono text-amber-400 bg-slate-950/70 px-2 py-0.5 rounded">
-                    <span>NUTRITION FACTS OCR</span>
-                    <span className="animate-pulse">● READY</span>
-                  </div>
-                  <div className="w-full h-0.5 bg-amber-400 shadow-md shadow-amber-400/80 animate-laser" />
-                  <div className="text-center text-[10px] text-slate-400 bg-slate-950/70 py-0.5 rounded">
-                    Align printed nutrition table in frame
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                onClick={handleCaptureCameraFrame}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-600 hover:to-emerald-600 text-slate-950 font-extrabold text-xs sm:text-sm py-3 rounded-xl shadow-xl shadow-amber-500/20 transition-transform active:scale-95"
-              >
-                <ScanLine className="w-4 h-4" />
-                <span>Scan Nutrition Facts Table</span>
-              </button>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs sm:text-sm py-3 rounded-xl border border-slate-700 transition-transform active:scale-95"
-              >
-                <Upload className="w-4 h-4 text-amber-400" />
-                <span>Upload Label Photo</span>
-              </button>
-            </div>
-
-            <div className="bg-slate-800/50 p-3 rounded-2xl border border-slate-700/60 text-xs text-slate-300 space-y-1">
-              <div className="font-bold text-amber-400 flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5" />
-                <span>OCR Scanning Tips:</span>
-              </div>
-              <p className="text-slate-400">
-                Hold still with good lighting. The OCR engine extracts Serving Size, Calories, Protein, Net Carbs, Sat Fat, Sugars, Sodium, and micronutrients directly from manufacturer packaging.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* MODE 4: DESCRIBE MEAL / TEXT & VOICE SEARCH VIEW */}
         {!isScanning && !scannedResult && mode === 'text' && (
@@ -832,39 +628,7 @@ export const ScannerModal: React.FC = () => {
           </div>
         )}
 
-        {/* MODE 5: BARCODE SCANNER VIEW */}
-        {!isScanning && !scannedResult && mode === 'barcode' && (
-          <div className="space-y-4 overflow-y-auto pr-1">
-            <div className="relative h-56 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex flex-col items-center justify-center p-4 text-center">
-              {isWebcamActive ? (
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-              ) : null}
 
-              <div className="absolute inset-x-8 inset-y-6 border-2 border-dashed border-rose-500/60 rounded-xl pointer-events-none flex items-center justify-center bg-slate-900/30 backdrop-blur-[1px]">
-                <div className="w-full h-1 bg-rose-500 shadow-lg shadow-rose-500 animate-laser" />
-              </div>
-              <p className="absolute bottom-2 inset-x-0 text-[10px] text-slate-300 font-semibold bg-slate-950/80 backdrop-blur-md py-1 mx-4 rounded-lg">
-                Position 13-digit EAN/UPC inside laser window or enter code below
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={manualBarcode}
-                onChange={(e) => setManualBarcode(e.target.value)}
-                placeholder="Enter 13-digit EAN/UPC barcode..."
-                className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-100 focus:outline-none focus:border-emerald-500"
-              />
-              <button
-                onClick={() => handleBarcodeSubmit()}
-                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition-colors"
-              >
-                Scan Code
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Hidden native input for gallery / file uploads */}
         <input
@@ -906,6 +670,7 @@ export const ScannerModal: React.FC = () => {
             </div>
 
             <ScanResultCard
+              key={scannedResult._id}
               foodItem={scannedResult}
               onLogged={() => {
                 setIsScannerOpen(false);

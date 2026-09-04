@@ -366,6 +366,55 @@ Hope this helps your macro goals!`;
     assert.strictEqual(parsed.cuisine, 'Indian');
   });
 
+  // Test 18: Clinical Cooked Food Normalization (Cooked Rice 400g & Moong Daal 200g Overloaded Calorie Fix)
+  await runTest('Clinical cooked food normalizer prevents raw grain/pulse hallucination (400g cooked rice is ~500 kcal, not 1600 kcal)', () => {
+    const rawOverloadedJson = JSON.stringify({
+      name: 'Rice and Dal Thali',
+      servingSizeGrams: 600,
+      isDecomposedPlate: true,
+      decomposedComponents: [
+        {
+          id: 'c1',
+          name: 'Cooked Rice',
+          portionGrams: 400,
+          protein_g: 50,
+          carbs_g: 320, // 80% dry raw rice hallucination
+          fat_g: 20
+        },
+        {
+          id: 'c2',
+          name: 'Moong Daal',
+          portionGrams: 200,
+          protein_g: 25,
+          carbs_g: 50,  // dry raw pulse hallucination
+          fat_g: 5
+        }
+      ],
+      nutritionalInfo: {
+        protein_g: 75,
+        carbs_g: 370,
+        fat_g: 25
+      }
+    });
+
+    const parsed = parseAndSanitizeAiFoodResponse(rawOverloadedJson);
+    assert.ok(parsed, 'Must parse successfully');
+    assert.ok(parsed.decomposedComponents, 'Components must exist');
+
+    const rice = parsed.decomposedComponents.find(c => c.name.toLowerCase().includes('rice'))!;
+    assert.ok(rice, 'Rice component must exist');
+    assert.ok(rice.carbs_g <= 120, `Cooked rice 400g carbs must be normalized to cooked density <= 120g (got: ${rice.carbs_g}g)`);
+    assert.ok(rice.calories <= 550, `Cooked rice 400g calories must be ~500 kcal, NOT 1600 kcal (got: ${rice.calories} kcal)`);
+
+    const dal = parsed.decomposedComponents.find(c => c.name.toLowerCase().includes('daal'))!;
+    assert.ok(dal, 'Dal component must exist');
+    assert.ok(dal.carbs_g <= 30, `Cooked dal 200g carbs must be normalized to cooked density <= 30g (got: ${dal.carbs_g}g)`);
+    assert.ok(dal.calories <= 200, `Cooked dal 200g calories must be ~180 kcal, NOT 400 kcal (got: ${dal.calories} kcal)`);
+
+    // Aggregate parent plate must match exact sum of normalized components
+    assert.strictEqual(parsed.nutritionalInfo.calories, rice.calories + dal.calories);
+  });
+
   console.log(`\n==================================================`);
   console.log(`TEST RESULTS: ${passed} Passed | ${failed} Failed`);
   console.log(`==================================================\n`);
